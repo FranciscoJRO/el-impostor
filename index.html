@@ -3,334 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Impostor - Familiar</title>
+    <title>El Impostor</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
-            color: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .card {
-            background: #16213e;
-            border: 1px solid #0f3460;
-            color: #e94560;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
-        }
-
-        h2 { color: #fff; margin-bottom: 25px;}
-
-        input {
-            padding: 15px;
-            font-size: 18px;
-            width: 70%;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            border: none;
-            text-align: center;
-            background: #0f3460;
-            color: white;
-            outline: none;
-        }
-
-        ul { text-align: left; font-size: 1.2em; margin-bottom: 20px; color: #a2a8d3; padding-left: 0; list-style: none;}
-        ul li { padding: 8px; border-bottom: 1px solid #0f3460; }
-
-        button {
-            background-color: #e94560;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.3em;
-            border-radius: 50px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            transition: transform 0.1s, background 0.3s;
-            font-weight: bold;
-            box-shadow: 0 4px 0 #c0354a;
-        }
-
-        button:active { transform: translateY(4px); box-shadow: none; }
-        button:hover { background-color: #ff5e78; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px;}
         
-        button.secondary { background-color: #0f3460; box-shadow: 0 4px 0 #0a2140; font-size: 1em; }
+        /* Estilos Generales */
+        .card { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(233, 69, 96, 0.2); width: 90%; max-width: 500px; margin-bottom: 20px; border: 1px solid #0f3460; }
+        .hidden { display: none !important; }
         
-        .big-text { font-size: 2.5em; font-weight: bold; color: #fff; margin: 20px 0; animation: popIn 0.5s; }
-        .red-text { color: #e94560; text-transform: uppercase; letter-spacing: 2px;}
-        .category-text { font-size: 1.5em; color: #a2a8d3; }
-        
-        .timer { font-size: 8em; font-weight: bold; color: #f1c40f; text-shadow: 4px 4px #000; margin: 20px 0; }
-        
-        .start-player-box {
-            background-color: #0f3460;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-size: 1.4em;
-            color: #fff;
-            border: 1px solid #f1c40f;
-        }
+        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        button:hover { background: #ff5e78; }
+        input { padding: 15px; width: 80%; border-radius: 10px; border: none; text-align: center; font-size: 1.2em; margin-bottom: 10px; background: #0f3460; color: white; }
 
-        .result-box {
-            background-color: rgba(22, 33, 62, 0.98);
-            padding: 40px;
-            border-radius: 20px;
-            animation: fadeIn 0.5s;
-            border: 3px solid #e94560;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            z-index: 100;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
+        /* Estilos Específicos TV (HOST) */
+        #hostView h1 { color: #f1c40f; font-size: 3em; margin: 0;}
+        #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
+        .player-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+        .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; font-weight: bold; animation: popIn 0.3s; }
+        
+        /* Estilos Específicos Celular (PLAYER) */
+        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
+        .impostor { background: #c0392b; }
+        .citizen { background: #27ae60; }
+        .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
 
-        .hidden { display: none; }
-        @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
     </style>
 </head>
 <body>
 
-    <div id="setupScreen" class="card">
-        <h1>🕵️ EL IMPOSTOR</h1>
-        <p style="color:#a2a8d3;">Ingresa los nombres de los jugadores</p>
-        <input type="text" id="playerName" placeholder="Nombre (ej. Abuelo)" onkeypress="handleEnter(event)">
-        <button onclick="addPlayer()" class="secondary">Agregar (+)</button>
-        
-        <div style="max-height: 200px; overflow-y: auto; margin-top:15px;">
-            <ul id="playerList"></ul>
-        </div>
-
-        <button onclick="startGameSetup()">¡COMENZAR PARTIDA!</button>
+    <div id="modeSelect" class="card">
+        <h2>¿Qué pantalla es esta?</h2>
+        <button onclick="initHost()">📺 SOY LA TV (HOST)</button>
+        <button onclick="initPlayer()">📱 SOY JUGADOR</button>
     </div>
 
-    <div id="distributeScreen" class="card hidden">
-        <h2 id="instructionText">...</h2>
+    <div id="hostView" class="hidden">
+        <h1>¡EL IMPOSTOR!</h1>
+        <p>Escanea para unirte:</p>
+        <div id="qrCode"></div>
+        <h2 style="margin-top:0">Jugadores: <span id="count">0</span></h2>
         
-        <button id="revealBtn" onclick="revealRole()">VER MI ROL 👁️</button>
+        <div id="playerList" class="player-grid"></div>
         
-        <div id="secretArea" class="hidden">
-            <p class="category-text" id="catDisplay"></p>
-            <div class="big-text" id="wordDisplay"></div>
-            <p style="font-size: 0.9em; margin-bottom: 20px; color: #a2a8d3;">Memorízala y borra la pantalla.</p>
-            <button onclick="nextPlayer()" style="background-color: #27ae60; box-shadow: 0 4px 0 #219150;">OK, LISTO 👍</button>
+        <div style="width: 100%; max-width: 400px; margin-top: 30px;">
+            <button onclick="startGame()" id="btnStart" style="font-size: 2em;">COMENZAR JUEGO</button>
         </div>
-    </div>
 
-    <div id="gameScreen" class="hidden">
-        <p class="category-text">Categoría: <span id="finalCategory" style="color:#fff; font-weight:bold;"></span></p>
-        
-        <div id="timerArea">
-            <div class="timer" id="timer">05:00</div>
-            
-            <div class="start-player-box">
-                Empieza preguntando: <br><strong id="startPlayerDisplay" style="color: #f1c40f; font-size: 1.5em;"></strong>
+        <div id="hostGameScreen" class="hidden" style="margin-top:30px;">
+            <h2 style="color:#a2a8d3">Categoría: <span id="hostCategory" style="color:white"></span></h2>
+            <div style="background:#0f3460; padding:20px; border-radius:15px; border: 1px solid #f1c40f;">
+                Empieza preguntando:<br>
+                <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
-
-            <button onclick="showFinalResult()" class="secondary" style="margin-top: 50px; background:#c0392b; box-shadow: 0 4px 0 #922b21;">🔍 REVELAR CULPABLE</button>
+            <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
+            <button onclick="resetGame()" style="background:#3498db; margin-top:30px;">Reiniciar Todo</button>
         </div>
     </div>
 
-    <div id="resultArea" class="result-box hidden">
-        <h2 style="color:white; margin-top:0;">El Impostor era:</h2>
-        <div id="impostorNameDisplay" class="big-text" style="color:#e94560; font-size:3.5em; margin: 10px 0;"></div>
-        <div style="font-size: 1.5em; color: #2ecc71; margin-bottom: 30px;">Palabra: <strong id="secretWordDisplay" style="color:white"></strong></div>
-        <button onclick="location.reload()">🔄 Jugar Otra Vez</button>
+    <div id="playerView" class="hidden" style="width: 100%;">
+        
+        <div id="loginScreen" class="card">
+            <h2>Tu Nombre</h2>
+            <input type="text" id="username" placeholder="Ej. Alex">
+            <button onclick="joinGame()">ENTRAR</button>
+        </div>
+
+        <div id="waitingScreen" class="card hidden">
+            <h2>¡Estás dentro!</h2>
+            <p>Mira la TV...</p>
+            <div style="font-size: 3em;">👀</div>
+        </div>
+
+        <div id="roleScreen" class="card hidden">
+            <h3 id="roleTitle">TU ROL:</h3>
+            <div id="roleCardBox" class="role-card">
+                <div id="secretWord" class="big-word">...</div>
+                <p id="roleDesc"></p>
+            </div>
+            <p style="color:#a2a8d3; margin-top:20px;">Categoría: <span id="playerCategory"></span></p>
+        </div>
     </div>
 
     <script>
-        // --- DATOS DEL JUEGO ---
-        let players = [];
-        const words = [
-            { cat: "Lugar", word: "Escuela" }, { cat: "Lugar", word: "Playa" },
-            { cat: "Lugar", word: "Hospital" }, { cat: "Lugar", word: "Cine" },
-            { cat: "Lugar", word: "Iglesia" }, { cat: "Lugar", word: "Mercado" },
-            { cat: "Lugar", word: "Parque" }, { cat: "Lugar", word: "Gimnasio" },
-            { cat: "Comida", word: "Tacos" }, { cat: "Comida", word: "Pizza" },
-            { cat: "Comida", word: "Huevo" }, { cat: "Comida", word: "Sopa" },
-            { cat: "Comida", word: "Pastel" }, { cat: "Comida", word: "Helado" },
-            { cat: "Objeto", word: "Escoba" }, { cat: "Objeto", word: "Celular" },
-            { cat: "Objeto", word: "Cama" }, { cat: "Objeto", word: "Dinero" },
-            { cat: "Objeto", word: "Llaves" }, { cat: "Objeto", word: "Reloj" },
-            { cat: "Animal", word: "Perro" }, { cat: "Animal", word: "Gato" },
-            { cat: "Animal", word: "Gallina" }, { cat: "Animal", word: "Ratón" },
-            { cat: "Animal", word: "Elefante" }, { cat: "Animal", word: "Caballo" }
-        ];
+        const socket = io();
+        let isHost = false;
 
-        let currentPlayerIndex = 0;
-        let impostorIndex = 0;
-        let currentWordObj = {};
-        let timerInterval;
-        let startingPlayer = "";
-        let availableVoices = [];
-
-        // --- SISTEMA DE VOZ MEJORADO ---
-        // Cargar voces disponibles
-        function loadVoices() {
-            availableVoices = window.speechSynthesis.getVoices();
-        }
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                // Cancelar habla anterior si existe
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // Buscar la mejor voz en español (Prioridad: Google > Microsoft > Cualquiera ES)
-                const spanishVoice = availableVoices.find(voice => 
-                    voice.lang.includes('es') && (voice.name.includes('Google') || voice.name.includes('Mexico'))
-                ) || availableVoices.find(voice => voice.lang.includes('es'));
-
-                if (spanishVoice) {
-                    utterance.voice = spanishVoice;
-                } else {
-                    utterance.lang = 'es-MX';
-                }
-
-                utterance.rate = 0.9; // Velocidad un poco más lenta para ser más clara
-                utterance.pitch = 1;  // Tono normal
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // --- FUNCIONES LÓGICAS ---
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        function handleEnter(e) { if(e.key === 'Enter') addPlayer(); }
-
-        function addPlayer() {
-            const input = document.getElementById('playerName');
-            const name = input.value.trim();
-            if (name) {
-                players.push(name);
-                const li = document.createElement('li');
-                li.innerHTML = `👤 ${name}`;
-                document.getElementById('playerList').appendChild(li);
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        function startGameSetup() {
-            // Aseguramos que las voces estén cargadas antes de empezar
-            if(availableVoices.length === 0) loadVoices();
-
-            if (players.length < 3) {
-                alert("Mínimo 3 jugadores.");
-                return;
-            }
-            shuffleArray(players);
-            currentWordObj = words[Math.floor(Math.random() * words.length)];
-            impostorIndex = Math.floor(Math.random() * players.length);
-            startingPlayer = players[Math.floor(Math.random() * players.length)];
-
-            document.getElementById('setupScreen').classList.add('hidden');
-            document.getElementById('distributeScreen').classList.remove('hidden');
+        // --- LÓGICA DE INICIO ---
+        function initHost() {
+            isHost = true;
+            document.getElementById('modeSelect').classList.add('hidden');
+            document.getElementById('hostView').classList.remove('hidden');
             
-            updateDistributionScreen();
+            // Generar QR con la URL actual
+            new QRCode(document.getElementById("qrCode"), {
+                text: window.location.href,
+                width: 200,
+                height: 200
+            });
         }
 
-        function updateDistributionScreen() {
-            const name = players[currentPlayerIndex];
-            const instruction = `Por favor, pásale el dispositivo a ${name}`;
-            document.getElementById('instructionText').innerText = instruction;
+        function initPlayer() {
+            document.getElementById('modeSelect').classList.add('hidden');
+            document.getElementById('playerView').classList.remove('hidden');
+        }
+
+        // --- LÓGICA DEL JUGADOR ---
+        function joinGame() {
+            const name = document.getElementById('username').value;
+            if(name) {
+                socket.emit('joinGame', name);
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('waitingScreen').classList.remove('hidden');
+            }
+        }
+
+        socket.on('roleAssign', (data) => {
+            document.getElementById('waitingScreen').classList.add('hidden');
+            document.getElementById('roleScreen').classList.remove('hidden');
             
-            // EL JUEGO HABLA
-            speak(instruction);
+            const card = document.getElementById('roleCardBox');
+            const word = document.getElementById('secretWord');
+            const desc = document.getElementById('roleDesc');
+            const cat = document.getElementById('playerCategory');
 
-            document.getElementById('revealBtn').classList.remove('hidden');
-            document.getElementById('secretArea').classList.add('hidden');
-        }
+            cat.innerText = data.category;
 
-        function revealRole() {
-            document.getElementById('revealBtn').classList.add('hidden');
-            document.getElementById('secretArea').classList.remove('hidden');
-
-            const catDisplay = document.getElementById('catDisplay');
-            const wordDisplay = document.getElementById('wordDisplay');
-
-            if (currentPlayerIndex === impostorIndex) {
-                catDisplay.innerText = `Categoría: ${currentWordObj.cat}`;
-                wordDisplay.innerHTML = "<span class='red-text'>ERES EL IMPOSTOR</span>";
+            if (data.role === 'Impostor') {
+                card.className = 'role-card impostor';
+                word.innerText = "IMPOSTOR";
+                desc.innerText = "No sabes la palabra. ¡Engáñalos!";
             } else {
-                catDisplay.innerText = `Categoría: ${currentWordObj.cat}`;
-                wordDisplay.innerText = currentWordObj.word;
+                card.className = 'role-card citizen';
+                word.innerText = data.word;
+                desc.innerText = "Eres un ciudadano. Descubre al mentiroso.";
             }
-        }
+        });
 
-        function nextPlayer() {
-            currentPlayerIndex++;
-            if (currentPlayerIndex < players.length) {
-                updateDistributionScreen();
-            } else {
-                startGame();
+        socket.on('resetClient', () => {
+            if(!isHost) {
+                document.getElementById('roleScreen').classList.add('hidden');
+                document.getElementById('waitingScreen').classList.remove('hidden');
             }
-        }
+        });
+
+        // --- LÓGICA DEL HOST (TV) ---
+        socket.on('updatePlayerList', (players) => {
+            if(!isHost) return;
+            const list = document.getElementById('playerList');
+            document.getElementById('count').innerText = players.length;
+            list.innerHTML = players.map(p => `<div class="player-badge">${p.name}</div>`).join('');
+        });
 
         function startGame() {
-            document.getElementById('distributeScreen').classList.add('hidden');
-            document.getElementById('gameScreen').classList.remove('hidden');
-            
-            document.getElementById('finalCategory').innerText = currentWordObj.cat;
-            document.getElementById('startPlayerDisplay').innerText = startingPlayer;
-            
-            speak("Todos saben su rol. Empieza preguntando... " + startingPlayer);
+            socket.emit('startGame');
+        }
 
-            let duration = 60 * 5; 
-            const display = document.getElementById('timer');
+        socket.on('gameStartedMain', (data) => {
+            if(!isHost) return;
+            document.getElementById('btnStart').parentElement.classList.add('hidden'); // Ocultar botón start
+            document.getElementById('qrCode').classList.add('hidden'); // Ocultar QR
+            document.getElementById('hostGameScreen').classList.remove('hidden');
             
-            timerInterval = setInterval(() => {
-                let minutes = parseInt(duration / 60, 10);
-                let seconds = parseInt(duration % 60, 10);
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-                display.textContent = minutes + ":" + seconds;
+            document.getElementById('hostCategory').innerText = data.category;
+            document.getElementById('hostStarter').innerText = data.start;
 
-                // Avisos de voz
-                if (duration === 60) speak("Queda un minuto");
-                if (duration === 10) speak("Diez segundos");
-
-                if (--duration < 0) {
-                    clearInterval(timerInterval);
-                    display.textContent = "¡TIEMPO!";
-                    display.style.color = "#e74c3c";
-                    speak("¡Tiempo terminado! Señalen al impostor.");
-                }
+            // Timer simple
+            let duration = 300;
+            const timerDisplay = document.getElementById('timer');
+            const interval = setInterval(() => {
+                let m = Math.floor(duration / 60);
+                let s = duration % 60;
+                timerDisplay.innerText = `0${m}:${s<10?'0':''}${s}`;
+                if(--duration < 0) clearInterval(interval);
             }, 1000);
+        });
+
+        function resetGame() {
+            socket.emit('resetGame');
+            location.reload(); // Recarga simple para el host
         }
 
-        function showFinalResult() {
-            clearInterval(timerInterval);
-            document.getElementById('resultArea').classList.remove('hidden');
-            const imposterName = players[impostorIndex];
-            
-            document.getElementById('impostorNameDisplay').innerText = imposterName;
-            document.getElementById('secretWordDisplay').innerText = currentWordObj.word;
-            
-            speak(`El impostor era... ${impostorName}. La palabra era... ${currentWordObj.word}`);
-            
-        }
     </script>
 </body>
 </html>
