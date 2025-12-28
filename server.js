@@ -121,7 +121,7 @@ io.on("connection", (socket) => {
 
   // Iniciar la lógica del juego
   socket.on("startGameLogic", () => {
-      if (players.length < 3) return; // Mínimo 3 jugadores
+      if (players.length < 1) return; // Mínimo 3 jugadores
       gameStarted = true;
 
       const selected = words[Math.floor(Math.random() * words.length)];
