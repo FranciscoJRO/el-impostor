@@ -1,51 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006"
-     crossorigin="anonymous"></script>
-    
+        crossorigin="anonymous"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Impostor</title>
-    
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px;}
-        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
         /* Estilos Generales */
-        .card { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(233, 69, 96, 0.2); width: 90%; max-width: 500px; margin-bottom: 20px; border: 1px solid #0f3460; }
-        .hidden { display: none !important; }
-        
-        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-        button:hover { background: #ff5e78; }
-        input { padding: 15px; width: 80%; border-radius: 10px; border: none; text-align: center; font-size: 1.2em; margin-bottom: 10px; background: #0f3460; color: white; }
+        .card {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
+            width: 90%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            border: 1px solid #0f3460;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #ff5e78;
+        }
+
+        input {
+            padding: 15px;
+            width: 80%;
+            border-radius: 10px;
+            border: none;
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            background: #0f3460;
+            color: white;
+        }
 
         /* Estilos Específicos TV (HOST) */
-        #hostView h1 { color: #f1c40f; font-size: 3em; margin: 0;}
-        #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
-        .player-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
-        .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; font-weight: bold; animation: popIn 0.3s; }
-        
+        #hostView h1 {
+            color: #f1c40f;
+            font-size: 3em;
+            margin: 0;
+        }
+
+        #qrCode {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .player-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .player-badge {
+            background: #3498db;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            animation: popIn 0.3s;
+        }
+
         /* Estilos Votación */
-        .vote-btn { background: #34495e; margin: 5px; padding: 20px; width: 90%; font-size: 1.5em; color: white; border: 2px solid #2c3e50; border-radius: 10px; cursor: pointer;}
-        .vote-btn:active { background: #e67e22; transform: scale(0.98); }
-        .vote-count { font-size: 4em; font-weight: bold; color: #f1c40f; }
-        .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
-        .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
-        .result-card { background: #c0392b; padding: 40px; border-radius: 20px; border: 5px solid white; animation: popIn 0.5s; }
+        .vote-btn {
+            background: #34495e;
+            margin: 5px;
+            padding: 20px;
+            width: 90%;
+            font-size: 1.5em;
+            color: white;
+            border: 2px solid #2c3e50;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .vote-btn:active {
+            background: #e67e22;
+            transform: scale(0.98);
+        }
+
+        .vote-count {
+            font-size: 4em;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        .bar-container {
+            width: 80%;
+            background: #333;
+            height: 30px;
+            border-radius: 15px;
+            margin: 20px auto;
+            overflow: hidden;
+            border: 2px solid #555;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #2ecc71;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .result-card {
+            background: #c0392b;
+            padding: 40px;
+            border-radius: 20px;
+            border: 5px solid white;
+            animation: popIn 0.5s;
+        }
 
         /* Estilos Específicos Celular (PLAYER) */
-        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
-        .impostor { background: #c0392b; }
-        .citizen { background: #27ae60; }
-        .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
+        .role-card {
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 2px solid white;
+        }
 
-        @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
+        .impostor {
+            background: #c0392b;
+        }
+
+        .citizen {
+            background: #27ae60;
+        }
+
+        .big-word {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0)
+            }
+
+            to {
+                transform: scale(1)
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <div id="modeSelect" class="card">
@@ -59,14 +201,16 @@
         <p>Escanea para unirte:</p>
         <div id="qrCode"></div>
         <h2 style="margin-top:0">Jugadores: <span id="count">0</span></h2>
-        
-        <div style="margin-top: 20px; text-align: left; max-width: 600px; color: #ccc; font-size: 0.8em; line-height: 1.4; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-left: auto; margin-right: auto;">
+
+        <div
+            style="margin-top: 20px; text-align: left; max-width: 600px; color: #ccc; font-size: 0.8em; line-height: 1.4; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-left: auto; margin-right: auto;">
             <h3 style="color: #f1c40f; margin-top:0;">Cómo jugar:</h3>
-            <p>1. Escaneen el código QR. 2. Recibirán una palabra secreta, excepto el Impostor. 3. Debatan y descubran quién miente.</p>
+            <p>1. Escaneen el código QR. 2. Recibirán una palabra secreta, excepto el Impostor. 3. Debatan y descubran
+                quién miente.</p>
         </div>
 
         <div id="playerList" class="player-grid"></div>
-        
+
         <div style="width: 100%; max-width: 400px; margin-top: 30px;">
             <button onclick="startGame()" id="btnStart" style="font-size: 2em;">COMENZAR JUEGO</button>
         </div>
@@ -78,8 +222,10 @@
                 <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
-            
-            <button onclick="triggerVoting()" style="background: #e67e22; font-size: 1.5em; margin-bottom: 20px; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
+
+            <button onclick="triggerVoting()"
+                style="background: #e67e22; font-size: 1.5em; margin-bottom: 20px; margin-top:20px;">🗳️ INICIAR
+                VOTACIÓN</button>
             <button onclick="resetGame()" style="background:#3498db;">Reiniciar Todo</button>
         </div>
 
@@ -87,7 +233,9 @@
             <h1>🗳️ ¡HORA DE VOTAR!</h1>
             <p>Miren sus teléfonos...</p>
             <div class="vote-count"><span id="votesIn">0</span> / <span id="totalPlayers">0</span></div>
-            <div class="bar-container"><div id="progressBar" class="bar-fill"></div></div>
+            <div class="bar-container">
+                <div id="progressBar" class="bar-fill"></div>
+            </div>
         </div>
 
         <div id="hostResultScreen" class="hidden">
@@ -95,6 +243,9 @@
             <div class="result-card">
                 <h2 style="margin:0">El expulsado es:</h2>
                 <div id="expelledName" style="font-size: 4em; font-weight:bold; margin: 20px 0;">...</div>
+
+                <h3 style="color: #f1c40f;">La palabra secreta era: <span id="revealWord"
+                        style="color: white; font-size: 1.5em;">...</span></h3>
             </div>
             <br>
             <button onclick="resetGame()" style="background:#3498db;">JUGAR OTRA VEZ 🔄</button>
@@ -102,7 +253,7 @@
     </div>
 
     <div id="playerView" class="hidden" style="width: 100%;">
-        
+
         <div id="loginScreen" class="card">
             <h2>Tu Nombre</h2>
             <input type="text" id="username" placeholder="Ej. Alex">
@@ -144,10 +295,10 @@
         // --- LÓGICA DE INICIO ---
         function initHost() {
             isHost = true;
-            socket.emit('iAmHost'); 
+            socket.emit('iAmHost');
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('hostView').classList.remove('hidden');
-            
+
             new QRCode(document.getElementById("qrCode"), {
                 text: window.location.href,
                 width: 200, height: 200
@@ -162,7 +313,7 @@
         // --- LÓGICA DEL JUGADOR ---
         function joinGame() {
             const name = document.getElementById('username').value;
-            if(name) {
+            if (name) {
                 socket.emit('joinGame', name);
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
@@ -171,9 +322,9 @@
 
         socket.on('roleAssign', (data) => {
             document.getElementById('waitingScreen').classList.add('hidden');
-            document.getElementById('playerWaitScreen').classList.add('hidden'); 
+            document.getElementById('playerWaitScreen').classList.add('hidden');
             document.getElementById('roleScreen').classList.remove('hidden');
-            
+
             const card = document.getElementById('roleCardBox');
             const word = document.getElementById('secretWord');
             const desc = document.getElementById('roleDesc');
@@ -193,20 +344,30 @@
         });
 
         socket.on('resetClient', () => {
-            if(!isHost) {
-                document.getElementById('roleScreen').classList.add('hidden');
-                document.getElementById('playerVotingScreen').classList.add('hidden');
-                document.getElementById('playerWaitScreen').classList.add('hidden');
-                document.getElementById('hostResultScreen').classList.add('hidden');
-                document.getElementById('waitingScreen').classList.remove('hidden');
-            } else {
-                location.reload();
-            }
-        });
+    if(!isHost) {
+        // Jugadores vuelven a pantalla de espera
+        document.getElementById('roleScreen').classList.add('hidden');
+        document.getElementById('playerVotingScreen').classList.add('hidden');
+        document.getElementById('playerWaitScreen').classList.add('hidden');
+        document.getElementById('hostResultScreen').classList.add('hidden');
+        document.getElementById('waitingScreen').classList.remove('hidden');
+    } else {
+        // Host vuelve al Lobby (SIN RECARGAR)
+        document.getElementById('hostGameScreen').classList.add('hidden');
+        document.getElementById('hostResultScreen').classList.add('hidden');
+        document.getElementById('hostVotingScreen').classList.add('hidden');
+
+        // Mostrar Lobby y QR de nuevo
+        document.getElementById('hostView').classList.remove('hidden');
+        document.getElementById('qrCode').classList.remove('hidden');
+        document.getElementById('btnStart').parentElement.classList.remove('hidden');
+        document.getElementById('count').innerText = "0"; // Se actualizará solo en un instante
+    }
+});
 
         // --- LÓGICA DEL HOST (TV) ---
         socket.on('updatePlayerList', (players) => {
-            if(!isHost) return;
+            if (!isHost) return;
             const list = document.getElementById('playerList');
             document.getElementById('count').innerText = players.length;
             list.innerHTML = players.map(p => `<div class="player-badge">${p.name}</div>`).join('');
@@ -217,11 +378,11 @@
         }
 
         socket.on('gameStartedMain', (data) => {
-            if(!isHost) return;
+            if (!isHost) return;
             document.getElementById('btnStart').parentElement.classList.add('hidden');
             document.getElementById('qrCode').classList.add('hidden');
             document.getElementById('hostGameScreen').classList.remove('hidden');
-            
+
             document.getElementById('hostCategory').innerText = data.category;
             document.getElementById('hostStarter').innerText = data.start;
 
@@ -233,14 +394,14 @@
             const interval = setInterval(() => {
                 let m = Math.floor(duration / 60);
                 let s = duration % 60;
-                timerDisplay.innerText = `0${m}:${s<10?'0':''}${s}`;
+                timerDisplay.innerText = `0${m}:${s < 10 ? '0' : ''}${s}`;
 
                 // --- AVISOS DE VOZ ---
-                if(duration === 60) speak("Queda un minuto.");
-                if(duration === 10) speak("Diez segundos. ¡Voten pronto!");
-                if(duration === 0) speak("Tiempo terminado. ¡Manos arriba!");
+                if (duration === 60) speak("Queda un minuto.");
+                if (duration === 10) speak("Diez segundos. ¡Voten pronto!");
+                if (duration === 0) speak("Tiempo terminado. ¡Manos arriba!");
 
-                if(--duration < 0) clearInterval(interval);
+                if (--duration < 0) clearInterval(interval);
             }, 1000);
         });
 
@@ -260,16 +421,16 @@
                 document.getElementById('totalPlayers').innerText = playersList.length;
                 document.getElementById('votesIn').innerText = "0";
                 document.getElementById('progressBar').style.width = "0%";
-                
+
                 // --- NARRADOR ---
                 speak("Es hora de votar. Miren sus teléfonos y elijan al sospechoso.");
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.remove('hidden');
-                
+
                 const container = document.getElementById('voteButtonsContainer');
                 container.innerHTML = "";
-                
+
                 playersList.forEach(p => {
                     const btn = document.createElement('button');
                     btn.className = 'vote-btn';
@@ -287,25 +448,27 @@
         }
 
         socket.on('updateVoteCount', (data) => {
-            if(!isHost) return;
+            if (!isHost) return;
             document.getElementById('votesIn').innerText = data.current;
             const percentage = (data.current / data.total) * 100;
             document.getElementById('progressBar').style.width = percentage + "%";
         });
 
         socket.on('votingCompleted', (results) => {
-            if(isHost) {
+            if (isHost) {
                 document.getElementById('hostVotingScreen').classList.add('hidden');
                 document.getElementById('hostResultScreen').classList.remove('hidden');
                 document.getElementById('expelledName').innerText = results.expelled;
-                
-                // --- CONFETI Y VOZ ---
-                speak("La tribu ha hablado. El expulsado es... " + results.expelled);
+
+                // NUEVO: Mostrar palabra secreta
+                document.getElementById('revealWord').innerText = results.secret;
+
+                // NUEVO: Narrador mejorado
+                speak("El expulsado es... " + results.expelled + ". ... Y la palabra secreta era... " + results.secret);
                 fireConfetti();
             } else {
-                document.getElementById('playerWaitScreen').classList.add('hidden');
-                document.getElementById('roleScreen').classList.remove('hidden');
-                alert("El expulsado fue: " + results.expelled);
+                // ... (resto igual)
+                alert("Expulsado: " + results.expelled + "\nPalabra: " + results.secret);
             }
         });
 
@@ -315,11 +478,11 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'es-MX';
-                utterance.rate = 1.0; 
-                
+                utterance.rate = 1.0;
+
                 const voices = window.speechSynthesis.getVoices();
                 const esVoice = voices.find(v => v.lang.includes('es') && v.name.includes('Google'));
-                if(esVoice) utterance.voice = esVoice;
+                if (esVoice) utterance.voice = esVoice;
 
                 window.speechSynthesis.speak(utterance);
             }
@@ -330,7 +493,7 @@
             var animationEnd = Date.now() + duration;
             var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
 
-            var interval = setInterval(function() {
+            var interval = setInterval(function () {
                 var timeLeft = animationEnd - Date.now();
                 if (timeLeft <= 0) return clearInterval(interval);
                 var particleCount = 50 * (timeLeft / duration);
@@ -341,4 +504,5 @@
 
     </script>
 </body>
+
 </html>

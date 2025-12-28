@@ -168,7 +168,7 @@ io.on("connection", (socket) => {
           expelled = name;
         }
       });
-      io.emit("votingCompleted", { expelled: expelled });
+      io.emit("votingCompleted", { expelled: expelled, secret: currentSecret });
     }
   });
 
