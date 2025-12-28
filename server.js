@@ -176,7 +176,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// IMPORTANTE: Glitch nos asigna un puerto automáticamente
-const listener = http.listen(process.env.PORT, () => {
-  console.log("Tu app está lista en el puerto " + listener.address().port);
+// CAMBIA ESTO AL FINAL DE TU ARCHIVO
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+  console.log(`Servidor listo en el puerto ${PORT}`);
 });
