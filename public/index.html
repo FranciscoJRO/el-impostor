@@ -3,11 +3,15 @@
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006"
      crossorigin="anonymous"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Impostor</title>
+    
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px;}
         
@@ -140,7 +144,7 @@
         // --- LÓGICA DE INICIO ---
         function initHost() {
             isHost = true;
-            socket.emit('iAmHost'); // Identificarse como Host
+            socket.emit('iAmHost'); 
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('hostView').classList.remove('hidden');
             
@@ -221,12 +225,21 @@
             document.getElementById('hostCategory').innerText = data.category;
             document.getElementById('hostStarter').innerText = data.start;
 
+            // --- NARRADOR ---
+            speak("Atención. La categoría es... " + data.category + ". Empieza preguntando... " + data.start);
+
             let duration = 300;
             const timerDisplay = document.getElementById('timer');
             const interval = setInterval(() => {
                 let m = Math.floor(duration / 60);
                 let s = duration % 60;
                 timerDisplay.innerText = `0${m}:${s<10?'0':''}${s}`;
+
+                // --- AVISOS DE VOZ ---
+                if(duration === 60) speak("Queda un minuto.");
+                if(duration === 10) speak("Diez segundos. ¡Voten pronto!");
+                if(duration === 0) speak("Tiempo terminado. ¡Manos arriba!");
+
                 if(--duration < 0) clearInterval(interval);
             }, 1000);
         });
@@ -247,6 +260,9 @@
                 document.getElementById('totalPlayers').innerText = playersList.length;
                 document.getElementById('votesIn').innerText = "0";
                 document.getElementById('progressBar').style.width = "0%";
+                
+                // --- NARRADOR ---
+                speak("Es hora de votar. Miren sus teléfonos y elijan al sospechoso.");
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.remove('hidden');
@@ -282,12 +298,46 @@
                 document.getElementById('hostVotingScreen').classList.add('hidden');
                 document.getElementById('hostResultScreen').classList.remove('hidden');
                 document.getElementById('expelledName').innerText = results.expelled;
+                
+                // --- CONFETI Y VOZ ---
+                speak("La tribu ha hablado. El expulsado es... " + results.expelled);
+                fireConfetti();
             } else {
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
                 alert("El expulsado fue: " + results.expelled);
             }
         });
+
+        // --- FUNCIONES MULTIMEDIA ---
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-MX';
+                utterance.rate = 1.0; 
+                
+                const voices = window.speechSynthesis.getVoices();
+                const esVoice = voices.find(v => v.lang.includes('es') && v.name.includes('Google'));
+                if(esVoice) utterance.voice = esVoice;
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 } }));
+            }, 250);
+        }
 
     </script>
 </body>
