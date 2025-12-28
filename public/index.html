@@ -21,35 +21,29 @@
         button:hover { background: #ff5e78; transform: scale(1.02); }
         button:active { transform: scale(0.95); }
 
-        /* INPUTS MEJORADOS (ESTILO NEÓN) */
+        /* INPUTS MEJORADOS */
         input { 
             background: rgba(255, 255, 255, 0.05); 
             border: 2px solid rgba(255, 255, 255, 0.1);
             color: white;
             padding: 15px 25px;
-            width: 85%; /* Un poco más ancho */
-            border-radius: 50px; /* Redondito */
+            width: 85%;
+            border-radius: 50px;
             font-size: 1.2em;
             margin-bottom: 15px;
             outline: none;
             transition: all 0.3s ease;
             text-align: center;
         }
-        
-        /* Efecto al tocar el input */
         input:focus {
-            border-color: #f1c40f; /* Color amarillo al escribir */
+            border-color: #f1c40f;
             background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); /* Resplandor */
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
             transform: scale(1.02);
         }
-        
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-            font-style: italic;
-        }
+        input::placeholder { color: rgba(255, 255, 255, 0.4); font-style: italic; }
 
-        /* TEXTO CÓDIGO */
+        /* TEXTOS */
         .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
         
         /* Host Specific */
@@ -67,7 +61,7 @@
         .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
         .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
 
-        /* --- ESTILOS RULETA --- */
+        /* RULETA */
         .roulette-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
         .wheel { width: 100%; height: 100%; border-radius: 50%; border: 5px solid white; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); position: relative; overflow: hidden; background: #333;}
         .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #e94560; z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
@@ -90,7 +84,22 @@
         <h3>Jugadores: <span id="count">0</span></h3>
         <div id="playerList"></div>
         <br>
+        
         <button onclick="startGame()" id="btnStart">COMENZAR JUEGO</button>
+
+        <div id="gameInstructions" style="margin-top: 40px; text-align: left; max-width: 700px; color: #ccc; font-size: 0.9em; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-left: auto; margin-right: auto;">
+            <h3 style="color: #f1c40f; border-bottom: 1px solid #555; padding-bottom: 10px; margin-top:0;">¿Cómo jugar "El Impostor"?</h3>
+            
+            <p><strong>1. Conexión:</strong> Todos escanean el QR o entran a la web con el código de sala.</p>
+            
+            <p><strong>2. Los Roles:</strong> Al iniciar, recibirán una <strong>Palabra Secreta</strong> (ej: "Playa"), excepto <strong>El Impostor</strong>, que no sabe nada.</p>
+            
+            <p><strong>3. El Debate:</strong> Por turnos, digan una palabra relacionada. 
+            <em>Ej: Si es "Playa", di "Arena".</em> 
+            ¡Si eres muy obvio, el Impostor adivinará! Si eres muy vago, te acusarán.</p>
+            
+            <p><strong>4. Votación:</strong> Al acabar el tiempo, voten para expulsar al sospechoso.</p>
+        </div>
         
         <div id="hostGameScreen" class="hidden" style="margin-top:30px; border-top: 1px solid #444; padding-top:20px;">
             <h2 style="color:#a2a8d3">Categoría: <span id="hostCategory" style="color:white"></span></h2>
@@ -129,10 +138,8 @@
     <div id="playerView" class="hidden" style="width: 100%;">
         <div id="loginScreen" class="card">
             <h2 style="margin-bottom: 25px;">Unirse al Juego</h2>
-            
             <input type="text" id="roomInput" placeholder="CÓDIGO (4 LETRAS)" style="text-transform:uppercase; letter-spacing: 3px; font-weight: bold;">
             <input type="text" id="username" placeholder="Tu Nombre">
-            
             <button onclick="joinGame()">ENTRAR 🚀</button>
             <p id="errorMsg" style="color:#e74c3c; margin-top:10px; font-weight:bold;"></p>
         </div>
@@ -165,7 +172,8 @@
         const socket = io();
         let isHost = false;
         let myRoomCode = "";
-        let currentTimer = null; // <--- CAMBIO 1: Variable para guardar el reloj
+        let currentTimer = null;
+
         // Detectar QR
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -175,7 +183,6 @@
                 document.getElementById('playerView').classList.remove('hidden');
                 document.getElementById('roomInput').value = roomParam;
                 document.getElementById('roomInput').disabled = true;
-                // Efecto visual para indicar que el código ya está puesto
                 document.getElementById('roomInput').style.opacity = "0.7";
                 document.getElementById('roomInput').style.border = "2px solid #2ecc71";
             }
@@ -217,7 +224,6 @@
             if(name && code.length === 4) {
                 socket.emit('joinGame', { name: name, roomCode: code });
             } else { 
-                // Animación de error visual en el botón
                 const btn = document.querySelector('#loginScreen button');
                 btn.style.background = "#e74c3c";
                 btn.innerText = "¡FALTAN DATOS!";
@@ -236,16 +242,16 @@
             }
         });
 
-      // --- LÓGICA DE JUEGO (COMÚN) ---
+        // --- JUEGO ---
         socket.on('gameStartedMain', (data) => {
             if(isHost) {
                 document.getElementById('btnStart').classList.add('hidden');
+                document.getElementById('gameInstructions').classList.add('hidden'); // Ocultar instrucciones al jugar
                 document.getElementById('hostGameScreen').classList.remove('hidden');
                 document.getElementById('hostCategory').innerText = data.category;
                 document.getElementById('hostStarter').innerText = data.start;
                 speak("La categoría es " + data.category + ". Empieza " + data.start);
-                
-                startTimer(300); // Esto llama a la función corregida
+                startTimer(300);
             }
         });
 
@@ -307,7 +313,6 @@
         socket.on('votingCompleted', (res) => {
             if(isHost) {
                 if (res.isTie) {
-                    // MOSTRAR RULETA
                     document.getElementById('hostVotingScreen').classList.add('hidden');
                     document.getElementById('hostRouletteScreen').classList.remove('hidden');
                     speak("¡Tenemos un empate! Que gire la ruleta.");
@@ -315,12 +320,10 @@
                         showFinalResult(res);
                     });
                 } else {
-                    // SIN EMPATE
                     document.getElementById('hostVotingScreen').classList.add('hidden');
                     showFinalResult(res);
                 }
             } else {
-                // JUGADORES
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
                 if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
@@ -337,10 +340,9 @@
             fireConfetti();
         }
 
-        // --- LÓGICA DE LA RULETA VISUAL ---
         function spinWheel(players, winner, callback) {
             const wheel = document.getElementById('wheel');
-            wheel.innerHTML = ''; // Limpiar
+            wheel.innerHTML = '';
             const count = players.length;
             const degPerSeg = 360 / count;
             const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
@@ -388,14 +390,14 @@
         function resetGame() { socket.emit('resetGame'); }
 
         socket.on('resetClient', () => {
-            // <--- CAMBIO 2: Matar el reloj si existe al reiniciar
-            if (currentTimer) clearInterval(currentTimer); 
+            if (currentTimer) clearInterval(currentTimer);
             
             if(isHost) {
                 document.getElementById('hostResultScreen').classList.add('hidden');
                 document.getElementById('hostRouletteScreen').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('btnStart').classList.remove('hidden');
+                document.getElementById('gameInstructions').classList.remove('hidden'); // Mostrar instrucciones de nuevo
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.add('hidden');
@@ -404,33 +406,20 @@
         });
 
         // --- UTILIDADES ---
-        
-        // <--- CAMBIO 3: Función del reloj corregida
         function startTimer(duration) {
-            // 1. Si ya había un reloj corriendo, MÁTALO
             if (currentTimer) clearInterval(currentTimer);
-
             const display = document.getElementById('timer');
             let timer = duration, minutes, seconds;
-            
-            // 2. Guardamos el nuevo reloj en la variable global
             currentTimer = setInterval(function () {
                 if(!isHost) { clearInterval(currentTimer); return; }
-                
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
                 minutes = minutes < 10 ? "0" + minutes : minutes;
                 seconds = seconds < 10 ? "0" + seconds : seconds;
-                
                 display.textContent = minutes + ":" + seconds;
-                
                 if(timer === 60) speak("Queda un minuto");
                 if(timer === 10) speak("Diez segundos");
-                
-                if (--timer < 0) { 
-                    clearInterval(currentTimer); 
-                    speak("Tiempo terminado"); 
-                }
+                if (--timer < 0) { clearInterval(currentTimer); speak("Tiempo terminado"); }
             }, 1000);
         }
 
