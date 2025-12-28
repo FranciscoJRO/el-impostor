@@ -165,7 +165,7 @@
         const socket = io();
         let isHost = false;
         let myRoomCode = "";
-
+        let currentTimer = null; // <--- CAMBIO 1: Variable para guardar el reloj
         // Detectar QR
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -236,7 +236,7 @@
             }
         });
 
-        // --- JUEGO ---
+      // --- LÓGICA DE JUEGO (COMÚN) ---
         socket.on('gameStartedMain', (data) => {
             if(isHost) {
                 document.getElementById('btnStart').classList.add('hidden');
@@ -244,7 +244,8 @@
                 document.getElementById('hostCategory').innerText = data.category;
                 document.getElementById('hostStarter').innerText = data.start;
                 speak("La categoría es " + data.category + ". Empieza " + data.start);
-                startTimer(300);
+                
+                startTimer(300); // Esto llama a la función corregida
             }
         });
 
@@ -387,6 +388,9 @@
         function resetGame() { socket.emit('resetGame'); }
 
         socket.on('resetClient', () => {
+            // <--- CAMBIO 2: Matar el reloj si existe al reiniciar
+            if (currentTimer) clearInterval(currentTimer); 
+            
             if(isHost) {
                 document.getElementById('hostResultScreen').classList.add('hidden');
                 document.getElementById('hostRouletteScreen').classList.add('hidden');
@@ -400,19 +404,33 @@
         });
 
         // --- UTILIDADES ---
+        
+        // <--- CAMBIO 3: Función del reloj corregida
         function startTimer(duration) {
+            // 1. Si ya había un reloj corriendo, MÁTALO
+            if (currentTimer) clearInterval(currentTimer);
+
             const display = document.getElementById('timer');
             let timer = duration, minutes, seconds;
-            let interval = setInterval(function () {
-                if(!isHost) { clearInterval(interval); return; }
+            
+            // 2. Guardamos el nuevo reloj en la variable global
+            currentTimer = setInterval(function () {
+                if(!isHost) { clearInterval(currentTimer); return; }
+                
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
                 minutes = minutes < 10 ? "0" + minutes : minutes;
                 seconds = seconds < 10 ? "0" + seconds : seconds;
+                
                 display.textContent = minutes + ":" + seconds;
+                
                 if(timer === 60) speak("Queda un minuto");
                 if(timer === 10) speak("Diez segundos");
-                if (--timer < 0) { clearInterval(interval); speak("Tiempo terminado"); }
+                
+                if (--timer < 0) { 
+                    clearInterval(currentTimer); 
+                    speak("Tiempo terminado"); 
+                }
             }, 1000);
         }
 
