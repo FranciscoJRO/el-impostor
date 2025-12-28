@@ -25,6 +25,14 @@
         .player-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; font-weight: bold; animation: popIn 0.3s; }
         
+        /* Estilos Votación */
+        .vote-btn { background: #34495e; margin: 5px; padding: 20px; width: 90%; font-size: 1.5em; color: white; border: 2px solid #2c3e50; border-radius: 10px; cursor: pointer;}
+        .vote-btn:active { background: #e67e22; transform: scale(0.98); }
+        .vote-count { font-size: 4em; font-weight: bold; color: #f1c40f; }
+        .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
+        .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
+        .result-card { background: #c0392b; padding: 40px; border-radius: 20px; border: 5px solid white; animation: popIn 0.5s; }
+
         /* Estilos Específicos Celular (PLAYER) */
         .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
         .impostor { background: #c0392b; }
@@ -48,6 +56,11 @@
         <div id="qrCode"></div>
         <h2 style="margin-top:0">Jugadores: <span id="count">0</span></h2>
         
+        <div style="margin-top: 20px; text-align: left; max-width: 600px; color: #ccc; font-size: 0.8em; line-height: 1.4; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-left: auto; margin-right: auto;">
+            <h3 style="color: #f1c40f; margin-top:0;">Cómo jugar:</h3>
+            <p>1. Escaneen el código QR. 2. Recibirán una palabra secreta, excepto el Impostor. 3. Debatan y descubran quién miente.</p>
+        </div>
+
         <div id="playerList" class="player-grid"></div>
         
         <div style="width: 100%; max-width: 400px; margin-top: 30px;">
@@ -61,7 +74,26 @@
                 <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
-            <button onclick="resetGame()" style="background:#3498db; margin-top:30px;">Reiniciar Todo</button>
+            
+            <button onclick="triggerVoting()" style="background: #e67e22; font-size: 1.5em; margin-bottom: 20px; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
+            <button onclick="resetGame()" style="background:#3498db;">Reiniciar Todo</button>
+        </div>
+
+        <div id="hostVotingScreen" class="hidden">
+            <h1>🗳️ ¡HORA DE VOTAR!</h1>
+            <p>Miren sus teléfonos...</p>
+            <div class="vote-count"><span id="votesIn">0</span> / <span id="totalPlayers">0</span></div>
+            <div class="bar-container"><div id="progressBar" class="bar-fill"></div></div>
+        </div>
+
+        <div id="hostResultScreen" class="hidden">
+            <h1>LA TRIBU HA HABLADO</h1>
+            <div class="result-card">
+                <h2 style="margin:0">El expulsado es:</h2>
+                <div id="expelledName" style="font-size: 4em; font-weight:bold; margin: 20px 0;">...</div>
+            </div>
+            <br>
+            <button onclick="resetGame()" style="background:#3498db;">JUGAR OTRA VEZ 🔄</button>
         </div>
     </div>
 
@@ -87,6 +119,18 @@
             </div>
             <p style="color:#a2a8d3; margin-top:20px;">Categoría: <span id="playerCategory"></span></p>
         </div>
+
+        <div id="playerVotingScreen" class="hidden">
+            <h2>¿Quién es el Impostor?</h2>
+            <div id="voteButtonsContainer" style="display:flex; flex-direction:column; align-items:center;"></div>
+        </div>
+
+        <div id="playerWaitScreen" class="hidden">
+            <div class="card">
+                <h2>Voto enviado ✅</h2>
+                <p>Esperando a los demás...</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -96,14 +140,13 @@
         // --- LÓGICA DE INICIO ---
         function initHost() {
             isHost = true;
+            socket.emit('iAmHost'); // Identificarse como Host
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('hostView').classList.remove('hidden');
             
-            // Generar QR con la URL actual
             new QRCode(document.getElementById("qrCode"), {
                 text: window.location.href,
-                width: 200,
-                height: 200
+                width: 200, height: 200
             });
         }
 
@@ -124,6 +167,7 @@
 
         socket.on('roleAssign', (data) => {
             document.getElementById('waitingScreen').classList.add('hidden');
+            document.getElementById('playerWaitScreen').classList.add('hidden'); 
             document.getElementById('roleScreen').classList.remove('hidden');
             
             const card = document.getElementById('roleCardBox');
@@ -147,7 +191,12 @@
         socket.on('resetClient', () => {
             if(!isHost) {
                 document.getElementById('roleScreen').classList.add('hidden');
+                document.getElementById('playerVotingScreen').classList.add('hidden');
+                document.getElementById('playerWaitScreen').classList.add('hidden');
+                document.getElementById('hostResultScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
+            } else {
+                location.reload();
             }
         });
 
@@ -160,19 +209,18 @@
         });
 
         function startGame() {
-            socket.emit('startGame');
+            socket.emit('startGameLogic');
         }
 
         socket.on('gameStartedMain', (data) => {
             if(!isHost) return;
-            document.getElementById('btnStart').parentElement.classList.add('hidden'); // Ocultar botón start
-            document.getElementById('qrCode').classList.add('hidden'); // Ocultar QR
+            document.getElementById('btnStart').parentElement.classList.add('hidden');
+            document.getElementById('qrCode').classList.add('hidden');
             document.getElementById('hostGameScreen').classList.remove('hidden');
             
             document.getElementById('hostCategory').innerText = data.category;
             document.getElementById('hostStarter').innerText = data.start;
 
-            // Timer simple
             let duration = 300;
             const timerDisplay = document.getElementById('timer');
             const interval = setInterval(() => {
@@ -185,8 +233,61 @@
 
         function resetGame() {
             socket.emit('resetGame');
-            location.reload(); // Recarga simple para el host
         }
+
+        // --- SISTEMA DE VOTACIÓN ---
+        function triggerVoting() {
+            socket.emit('startVoting');
+        }
+
+        socket.on('votingPhaseStarted', (playersList) => {
+            if (isHost) {
+                document.getElementById('hostGameScreen').classList.add('hidden');
+                document.getElementById('hostVotingScreen').classList.remove('hidden');
+                document.getElementById('totalPlayers').innerText = playersList.length;
+                document.getElementById('votesIn').innerText = "0";
+                document.getElementById('progressBar').style.width = "0%";
+            } else {
+                document.getElementById('roleScreen').classList.add('hidden');
+                document.getElementById('playerVotingScreen').classList.remove('hidden');
+                
+                const container = document.getElementById('voteButtonsContainer');
+                container.innerHTML = "";
+                
+                playersList.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.className = 'vote-btn';
+                    btn.innerText = p.name;
+                    btn.onclick = () => submitVote(p.name);
+                    container.appendChild(btn);
+                });
+            }
+        });
+
+        function submitVote(name) {
+            socket.emit('castVote', name);
+            document.getElementById('playerVotingScreen').classList.add('hidden');
+            document.getElementById('playerWaitScreen').classList.remove('hidden');
+        }
+
+        socket.on('updateVoteCount', (data) => {
+            if(!isHost) return;
+            document.getElementById('votesIn').innerText = data.current;
+            const percentage = (data.current / data.total) * 100;
+            document.getElementById('progressBar').style.width = percentage + "%";
+        });
+
+        socket.on('votingCompleted', (results) => {
+            if(isHost) {
+                document.getElementById('hostVotingScreen').classList.add('hidden');
+                document.getElementById('hostResultScreen').classList.remove('hidden');
+                document.getElementById('expelledName').innerText = results.expelled;
+            } else {
+                document.getElementById('playerWaitScreen').classList.add('hidden');
+                document.getElementById('roleScreen').classList.remove('hidden');
+                alert("El expulsado fue: " + results.expelled);
+            }
+        });
 
     </script>
 </body>

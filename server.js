@@ -7,130 +7,72 @@ app.use(express.static("public"));
 
 let players = [];
 let gameStarted = false;
+let votes = {}; // Almacenar votos
 
-// Palabras para el juego (Más de 100 opciones)
+// Palabras para el juego
 const words = [
     // --- LUGARES ---
-    { cat: "Lugar", word: "Aeropuerto" },
-    { cat: "Lugar", word: "Cementerio" },
-    { cat: "Lugar", word: "Cárcel" },
-    { cat: "Lugar", word: "Hospital" },
-    { cat: "Lugar", word: "Biblioteca" },
-    { cat: "Lugar", word: "Gimnasio" },
-    { cat: "Lugar", word: "Zoológico" },
-    { cat: "Lugar", word: "Circo" },
-    { cat: "Lugar", word: "Cine" },
-    { cat: "Lugar", word: "Playa" },
-    { cat: "Lugar", word: "Montaña" },
-    { cat: "Lugar", word: "Desierto" },
-    { cat: "Lugar", word: "Estadio de Fútbol" },
-    { cat: "Lugar", word: "Supermercado" },
-    { cat: "Lugar", word: "Iglesia" },
-    { cat: "Lugar", word: "Escuela" },
-    { cat: "Lugar", word: "Banco" },
-    { cat: "Lugar", word: "Discoteca" },
-    { cat: "Lugar", word: "Museo" },
-    { cat: "Lugar", word: "Restaurante" },
-    { cat: "Lugar", word: "Hotel" },
-    { cat: "Lugar", word: "Peluquería" },
-    { cat: "Lugar", word: "Estación de Policía" },
-    { cat: "Lugar", word: "Espacio Exterior" },
+    { cat: "Lugar", word: "Aeropuerto" }, { cat: "Lugar", word: "Cementerio" },
+    { cat: "Lugar", word: "Cárcel" }, { cat: "Lugar", word: "Hospital" },
+    { cat: "Lugar", word: "Biblioteca" }, { cat: "Lugar", word: "Gimnasio" },
+    { cat: "Lugar", word: "Zoológico" }, { cat: "Lugar", word: "Circo" },
+    { cat: "Lugar", word: "Cine" }, { cat: "Lugar", word: "Playa" },
+    { cat: "Lugar", word: "Montaña" }, { cat: "Lugar", word: "Desierto" },
+    { cat: "Lugar", word: "Estadio de Fútbol" }, { cat: "Lugar", word: "Supermercado" },
+    { cat: "Lugar", word: "Iglesia" }, { cat: "Lugar", word: "Escuela" },
+    { cat: "Lugar", word: "Banco" }, { cat: "Lugar", word: "Discoteca" },
+    { cat: "Lugar", word: "Museo" }, { cat: "Lugar", word: "Restaurante" },
+    { cat: "Lugar", word: "Hotel" }, { cat: "Lugar", word: "Peluquería" },
+    { cat: "Lugar", word: "Estación de Policía" }, { cat: "Lugar", word: "Espacio Exterior" },
     { cat: "Lugar", word: "Submarino" },
-
     // --- COMIDA ---
-    { cat: "Comida", word: "Sushi" },
-    { cat: "Comida", word: "Hamburguesa" },
-    { cat: "Comida", word: "Pizza" },
-    { cat: "Comida", word: "Tacos" },
-    { cat: "Comida", word: "Helado" },
-    { cat: "Comida", word: "Chocolate" },
-    { cat: "Comida", word: "Huevo" },
-    { cat: "Comida", word: "Sopa" },
-    { cat: "Comida", word: "Ensalada" },
-    { cat: "Comida", word: "Pollo Frito" },
-    { cat: "Comida", word: "Pescado" },
-    { cat: "Comida", word: "Espagueti" },
-    { cat: "Comida", word: "Pastel" },
-    { cat: "Comida", word: "Hot Dog" },
-    { cat: "Comida", word: "Cereal" },
-    { cat: "Comida", word: "Paella" },
-    { cat: "Comida", word: "Queso" },
-    { cat: "Comida", word: "Sandwich" },
-    { cat: "Comida", word: "Palomitas" },
-    { cat: "Comida", word: "Café" },
-
+    { cat: "Comida", word: "Sushi" }, { cat: "Comida", word: "Hamburguesa" },
+    { cat: "Comida", word: "Pizza" }, { cat: "Comida", word: "Tacos" },
+    { cat: "Comida", word: "Helado" }, { cat: "Comida", word: "Chocolate" },
+    { cat: "Comida", word: "Huevo" }, { cat: "Comida", word: "Sopa" },
+    { cat: "Comida", word: "Ensalada" }, { cat: "Comida", word: "Pollo Frito" },
+    { cat: "Comida", word: "Pescado" }, { cat: "Comida", word: "Espagueti" },
+    { cat: "Comida", word: "Pastel" }, { cat: "Comida", word: "Hot Dog" },
+    { cat: "Comida", word: "Cereal" }, { cat: "Comida", word: "Paella" },
+    { cat: "Comida", word: "Queso" }, { cat: "Comida", word: "Sandwich" },
+    { cat: "Comida", word: "Palomitas" }, { cat: "Comida", word: "Café" },
     // --- ANIMALES ---
-    { cat: "Animal", word: "Elefante" },
-    { cat: "Animal", word: "Jirafa" },
-    { cat: "Animal", word: "León" },
-    { cat: "Animal", word: "Tiburón" },
-    { cat: "Animal", word: "Pingüino" },
-    { cat: "Animal", word: "Serpiente" },
-    { cat: "Animal", word: "Araña" },
-    { cat: "Animal", word: "Perro" },
-    { cat: "Animal", word: "Gato" },
-    { cat: "Animal", word: "Ratón" },
-    { cat: "Animal", word: "Caballo" },
-    { cat: "Animal", word: "Vaca" },
-    { cat: "Animal", word: "Cerdo" },
-    { cat: "Animal", word: "Gallina" },
-    { cat: "Animal", word: "Mono" },
-    { cat: "Animal", word: "Delfín" },
-    { cat: "Animal", word: "Águila" },
-    { cat: "Animal", word: "Murciélago" },
-    { cat: "Animal", word: "Oso" },
-    { cat: "Animal", word: "Mosquito" },
-
+    { cat: "Animal", word: "Elefante" }, { cat: "Animal", word: "Jirafa" },
+    { cat: "Animal", word: "León" }, { cat: "Animal", word: "Tiburón" },
+    { cat: "Animal", word: "Pingüino" }, { cat: "Animal", word: "Serpiente" },
+    { cat: "Animal", word: "Araña" }, { cat: "Animal", word: "Perro" },
+    { cat: "Animal", word: "Gato" }, { cat: "Animal", word: "Ratón" },
+    { cat: "Animal", word: "Caballo" }, { cat: "Animal", word: "Vaca" },
+    { cat: "Animal", word: "Cerdo" }, { cat: "Animal", word: "Gallina" },
+    { cat: "Animal", word: "Mono" }, { cat: "Animal", word: "Delfín" },
+    { cat: "Animal", word: "Águila" }, { cat: "Animal", word: "Murciélago" },
+    { cat: "Animal", word: "Oso" }, { cat: "Animal", word: "Mosquito" },
     // --- OBJETOS ---
-    { cat: "Objeto", word: "Teléfono" },
-    { cat: "Objeto", word: "Computadora" },
-    { cat: "Objeto", word: "Cama" },
-    { cat: "Objeto", word: "Inodoro" },
-    { cat: "Objeto", word: "Cepillo de Dientes" },
-    { cat: "Objeto", word: "Zapatos" },
-    { cat: "Objeto", word: "Gafas de Sol" },
-    { cat: "Objeto", word: "Reloj" },
-    { cat: "Objeto", word: "Llaves" },
-    { cat: "Objeto", word: "Paraguas" },
-    { cat: "Objeto", word: "Mochila" },
-    { cat: "Objeto", word: "Guitarra" },
-    { cat: "Objeto", word: "Pelota" },
-    { cat: "Objeto", word: "Libro" },
-    { cat: "Objeto", word: "Espejo" },
-    { cat: "Objeto", word: "Cuchillo" },
-    { cat: "Objeto", word: "Silla" },
-    { cat: "Objeto", word: "Televisión" },
-    { cat: "Objeto", word: "Cámara" },
-    { cat: "Objeto", word: "Anillo" },
-
+    { cat: "Objeto", word: "Teléfono" }, { cat: "Objeto", word: "Computadora" },
+    { cat: "Objeto", word: "Cama" }, { cat: "Objeto", word: "Inodoro" },
+    { cat: "Objeto", word: "Cepillo de Dientes" }, { cat: "Objeto", word: "Zapatos" },
+    { cat: "Objeto", word: "Gafas de Sol" }, { cat: "Objeto", word: "Reloj" },
+    { cat: "Objeto", word: "Llaves" }, { cat: "Objeto", word: "Paraguas" },
+    { cat: "Objeto", word: "Mochila" }, { cat: "Objeto", word: "Guitarra" },
+    { cat: "Objeto", word: "Pelota" }, { cat: "Objeto", word: "Libro" },
+    { cat: "Objeto", word: "Espejo" }, { cat: "Objeto", word: "Cuchillo" },
+    { cat: "Objeto", word: "Silla" }, { cat: "Objeto", word: "Televisión" },
+    { cat: "Objeto", word: "Cámara" }, { cat: "Objeto", word: "Anillo" },
     // --- PROFESIONES ---
-    { cat: "Profesión", word: "Doctor" },
-    { cat: "Profesión", word: "Policía" },
-    { cat: "Profesión", word: "Bombero" },
-    { cat: "Profesión", word: "Maestro" },
-    { cat: "Profesión", word: "Payaso" },
-    { cat: "Profesión", word: "Astronauta" },
-    { cat: "Profesión", word: "Futbolista" },
-    { cat: "Profesión", word: "Presidente" },
-    { cat: "Profesión", word: "Cocinero" },
-    { cat: "Profesión", word: "Juez" },
-    { cat: "Profesión", word: "Mecánico" },
-    { cat: "Profesión", word: "Cantante" },
-    { cat: "Profesión", word: "Ladrón" },
-    { cat: "Profesión", word: "Mago" },
+    { cat: "Profesión", word: "Doctor" }, { cat: "Profesión", word: "Policía" },
+    { cat: "Profesión", word: "Bombero" }, { cat: "Profesión", word: "Maestro" },
+    { cat: "Profesión", word: "Payaso" }, { cat: "Profesión", word: "Astronauta" },
+    { cat: "Profesión", word: "Futbolista" }, { cat: "Profesión", word: "Presidente" },
+    { cat: "Profesión", word: "Cocinero" }, { cat: "Profesión", word: "Juez" },
+    { cat: "Profesión", word: "Mecánico" }, { cat: "Profesión", word: "Cantante" },
+    { cat: "Profesión", word: "Ladrón" }, { cat: "Profesión", word: "Mago" },
     { cat: "Profesión", word: "Granjero" },
-
     // --- TRANSPORTE ---
-    { cat: "Transporte", word: "Avión" },
-    { cat: "Transporte", word: "Helicóptero" },
-    { cat: "Transporte", word: "Barco" },
-    { cat: "Transporte", word: "Bicicleta" },
-    { cat: "Transporte", word: "Tren" },
-    { cat: "Transporte", word: "Autobús" },
-    { cat: "Transporte", word: "Patines" },
-    { cat: "Transporte", word: "Globo Aerostático" },
-    { cat: "Transporte", word: "Caballo" },
-    { cat: "Transporte", word: "Ambulancia" }
+    { cat: "Transporte", word: "Avión" }, { cat: "Transporte", word: "Helicóptero" },
+    { cat: "Transporte", word: "Barco" }, { cat: "Transporte", word: "Bicicleta" },
+    { cat: "Transporte", word: "Tren" }, { cat: "Transporte", word: "Autobús" },
+    { cat: "Transporte", word: "Patines" }, { cat: "Transporte", word: "Globo Aerostático" },
+    { cat: "Transporte", word: "Caballo" }, { cat: "Transporte", word: "Ambulancia" }
 ];
 
 io.on("connection", (socket) => {
@@ -149,24 +91,67 @@ io.on("connection", (socket) => {
   socket.on("startGame", () => {
     if (players.length < 3) return;
     gameStarted = true;
+    // Unir al Host a un cuarto especial para enviarle actualizaciones privadas
+    // Asumimos que el Host no está en la lista de jugadores, pero controlamos el evento desde el cliente
+  });
 
-    const selected = words[Math.floor(Math.random() * words.length)];
-    const imposterIndex = Math.floor(Math.random() * players.length);
-    const startingPlayer = players[Math.floor(Math.random() * players.length)].name;
+  // Identificar al Host
+  socket.on("iAmHost", () => {
+    socket.join("hostRoom");
+  });
 
-    players.forEach((p, index) => {
-      if (index === imposterIndex) {
-        io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
-      } else {
-        io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: startingPlayer });
-      }
+  socket.on("startGameLogic", () => {
+      const selected = words[Math.floor(Math.random() * words.length)];
+      const imposterIndex = Math.floor(Math.random() * players.length);
+      const startingPlayer = players[Math.floor(Math.random() * players.length)].name;
+  
+      players.forEach((p, index) => {
+        if (index === imposterIndex) {
+          io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
+        } else {
+          io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: startingPlayer });
+        }
+      });
+  
+      io.emit("gameStartedMain", { category: selected.cat, start: startingPlayer });
+  });
+
+  // --- SISTEMA DE VOTACIÓN ---
+  socket.on("startVoting", () => {
+    votes = {}; // Reiniciar votos
+    io.emit("votingPhaseStarted", players);
+  });
+
+  socket.on("castVote", (voteForName) => {
+    votes[socket.id] = voteForName;
+    
+    const totalVotes = Object.keys(votes).length;
+    // Enviar progreso al Host
+    io.to("hostRoom").emit("updateVoteCount", { 
+      current: totalVotes, 
+      total: players.length 
     });
 
-    io.emit("gameStartedMain", { category: selected.cat, start: startingPlayer });
+    // Si todos votaron
+    if (totalVotes === players.length) {
+      let counts = {};
+      let maxVotes = 0;
+      let expelled = "";
+  
+      Object.values(votes).forEach(name => {
+        counts[name] = (counts[name] || 0) + 1;
+        if (counts[name] > maxVotes) {
+          maxVotes = counts[name];
+          expelled = name;
+        }
+      });
+      io.emit("votingCompleted", { expelled: expelled });
+    }
   });
 
   socket.on("resetGame", () => {
     gameStarted = false;
+    votes = {};
     io.emit("resetClient");
   });
 
@@ -176,7 +161,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// CAMBIA ESTO AL FINAL DE TU ARCHIVO
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
   console.log(`Servidor listo en el puerto ${PORT}`);
