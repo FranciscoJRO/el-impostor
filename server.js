@@ -193,7 +193,6 @@ const words = [
     { cat: "Transporte", word: "Uber" }, { cat: "Transporte", word: "Moto" }
 
 ];
-
 function makeId(length) {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -213,14 +212,15 @@ io.on("connection", (socket) => {
             started: false, 
             votes: {}, 
             secret: '', 
-            hostId: socket.id 
+            hostId: socket.id,
+            category: '' // Guardamos la categoría actual
         };
         socket.join(roomCode);
         socket.roomCode = roomCode;
         socket.emit("gameCreated", roomCode);
     });
 
-    // 2. UNIRSE A SALA
+    // 2. UNIRSE O RE-CONECTARSE
     socket.on("joinGame", ({ name, roomCode }) => {
         roomCode = roomCode.toUpperCase();
         const room = games[roomCode];
@@ -229,16 +229,50 @@ io.on("connection", (socket) => {
             socket.emit("errorMsg", "Esa sala no existe.");
             return;
         }
-        if (room.started) {
-            socket.emit("errorMsg", "La partida ya empezó.");
-            return;
-        }
 
-        const player = { id: socket.id, name: name, role: "citizen" };
-        room.players.push(player);
-        
-        socket.join(roomCode);
-        socket.roomCode = roomCode;
+        // Buscar si el jugador ya existía (por nombre)
+        const existingPlayer = room.players.find(p => p.name === name);
+
+        if (existingPlayer) {
+            // --- LÓGICA DE RECONEXIÓN ---
+            // Actualizamos su ID de socket porque el viejo ya murió
+            existingPlayer.id = socket.id;
+            existingPlayer.connected = true;
+            
+            socket.join(roomCode);
+            socket.roomCode = roomCode;
+            socket.username = name; // Guardar nombre en el socket para desconexiones futuras
+
+            // Si el juego ya empezó, le devolvemos su rol
+            if (room.started) {
+                if (existingPlayer.role === "Impostor") {
+                    socket.emit("roleAssign", { role: "Impostor", category: room.category, start: "..." });
+                } else {
+                    socket.emit("roleAssign", { role: "Ciudadano", category: room.category, word: room.secret, start: "..." });
+                }
+            } else {
+                // Si estamos en el lobby, avisar que volvió
+                socket.emit("updatePlayerList", room.players);
+            }
+        } else {
+            // --- JUGADOR NUEVO ---
+            if (room.started) {
+                socket.emit("errorMsg", "La partida ya empezó.");
+                return;
+            }
+
+            const player = { 
+                id: socket.id, 
+                name: name, 
+                role: "citizen", 
+                connected: true 
+            };
+            room.players.push(player);
+            
+            socket.join(roomCode);
+            socket.roomCode = roomCode;
+            socket.username = name;
+        }
 
         io.to(roomCode).emit("updatePlayerList", room.players);
     });
@@ -249,19 +283,29 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
 
-        if (room.players.length < 1) return; // Mínimo 1 para pruebas
+        // Filtrar solo jugadores conectados para asignar roles
+        const activePlayers = room.players.filter(p => p.connected);
+        
+        if (activePlayers.length < 1) return; // Mínimo 1 para pruebas
 
         room.started = true;
         
         const selected = words[Math.floor(Math.random() * words.length)];
         room.secret = selected.word;
-        const imposterIndex = Math.floor(Math.random() * room.players.length);
-        const startingPlayer = room.players[Math.floor(Math.random() * room.players.length)].name;
+        room.category = selected.cat; // Guardar para reconexiones
 
-        room.players.forEach((p, index) => {
+        const imposterIndex = Math.floor(Math.random() * activePlayers.length);
+        const startingPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)].name;
+
+        activePlayers.forEach((p, index) => {
+            // Actualizamos el objeto jugador original en la lista general
+            const originalPlayer = room.players.find(pl => pl.name === p.name);
+            
             if (index === imposterIndex) {
+                originalPlayer.role = "Impostor";
                 io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
             } else {
+                originalPlayer.role = "Ciudadano";
                 io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: startingPlayer });
             }
         });
@@ -269,11 +313,12 @@ io.on("connection", (socket) => {
         io.to(code).emit("gameStartedMain", { category: selected.cat, start: startingPlayer });
     });
 
-    // 4. VOTACIONES CON EMPATE
+    // 4. VOTACIONES
     socket.on("startVoting", () => {
         const code = socket.roomCode;
         if(games[code]) {
             games[code].votes = {};
+            // Enviamos la lista completa, incluso desconectados, por si vuelven justo a tiempo
             io.to(code).emit("votingPhaseStarted", games[code].players);
         }
     });
@@ -283,17 +328,23 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
 
-        room.votes[socket.id] = voteForName;
+        // Verificar que el jugador tenga rol (que sea parte del juego)
+        const player = room.players.find(p => p.id === socket.id);
+        if(!player) return;
 
-        const totalVotes = Object.keys(room.votes).length;
+        room.votes[player.name] = voteForName; // Usamos nombre como clave para evitar problemas de ID
+
+        // Contamos cuántos jugadores *activos* hay vs votos recibidos
+        const activeCount = room.players.filter(p => p.connected).length;
+        const votesCount = Object.keys(room.votes).length;
         
         io.to(room.hostId).emit("updateVoteCount", { 
-            current: totalVotes, 
-            total: room.players.length 
+            current: votesCount, 
+            total: activeCount 
         });
 
-        if (totalVotes === room.players.length) {
-            // Contar votos
+        // Si ya votaron todos los conectados
+        if (votesCount >= activeCount) {
             let counts = {};
             let maxVotes = 0;
 
@@ -302,21 +353,17 @@ io.on("connection", (socket) => {
                 if (counts[name] > maxVotes) maxVotes = counts[name];
             });
 
-            // Buscar quiénes empataron con el máximo de votos
             let candidates = Object.keys(counts).filter(name => counts[name] === maxVotes);
-
             let expelled = "";
             let isTie = false;
 
             if (candidates.length > 1) {
-                // ¡EMPATE! Elegir uno al azar entre los empatados
                 isTie = true;
                 expelled = candidates[Math.floor(Math.random() * candidates.length)];
             } else {
                 expelled = candidates[0];
             }
             
-            // Enviamos la lista de candidatos (tiedPlayers) para la ruleta
             io.to(code).emit("votingCompleted", { 
                 expelled: expelled, 
                 secret: room.secret,
@@ -333,18 +380,45 @@ io.on("connection", (socket) => {
         if(room) {
             room.started = false;
             room.votes = {};
+            // Limpiar roles
+            room.players.forEach(p => p.role = "citizen");
             io.to(code).emit("resetClient");
         }
     });
 
+    // 6. DESCONEXIÓN SUAVE
     socket.on("disconnect", () => {
         const code = socket.roomCode;
         if(code && games[code]) {
-            games[code].players = games[code].players.filter(p => p.id !== socket.id);
+            // Si es el HOST, borramos la sala
             if(games[code].hostId === socket.id) {
                 delete games[code];
-            } else {
-                io.to(code).emit("updatePlayerList", games[code].players);
+                return;
+            }
+
+            // Si es un JUGADOR, solo marcamos como desconectado
+            const player = games[code].players.find(p => p.id === socket.id);
+            if (player) {
+                player.connected = false;
+                
+                // Opción: Si quieres borrarlos del lobby pero NO de la partida iniciada:
+                if (!games[code].started) {
+                    // Si no ha empezado, lo borramos tras 5 segundos si no vuelve
+                    setTimeout(() => {
+                        const currentRoom = games[code];
+                        // Verificar si sigue existiendo y si sigue desconectado
+                        if (currentRoom) {
+                           const p = currentRoom.players.find(pl => pl.name === player.name);
+                           if (p && !p.connected && !currentRoom.started) {
+                               currentRoom.players = currentRoom.players.filter(pl => pl.name !== player.name);
+                               io.to(code).emit("updatePlayerList", currentRoom.players);
+                           }
+                        }
+                    }, 5000);
+                }
+                
+                // Avisamos visualmente que alguien se fue (opcional, pero ayuda al Host)
+                // io.to(code).emit("playerDisconnected", player.name); 
             }
         }
     });

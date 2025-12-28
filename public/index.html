@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006" crossorigin="anonymous"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Impostor</title>
@@ -14,8 +15,42 @@
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; overflow-x: hidden;}
         .card { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(233, 69, 96, 0.2); width: 90%; max-width: 500px; margin-bottom: 20px; border: 1px solid #0f3460; }
         .hidden { display: none !important; }
-        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-        .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase;}
+        
+        /* BOTONES */
+        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4); }
+        button:hover { background: #ff5e78; transform: scale(1.02); }
+        button:active { transform: scale(0.95); }
+
+        /* INPUTS MEJORADOS (ESTILO NEÓN) */
+        input { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px 25px;
+            width: 85%; /* Un poco más ancho */
+            border-radius: 50px; /* Redondito */
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        /* Efecto al tocar el input */
+        input:focus {
+            border-color: #f1c40f; /* Color amarillo al escribir */
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); /* Resplandor */
+            transform: scale(1.02);
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+
+        /* TEXTO CÓDIGO */
+        .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
         
         /* Host Specific */
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
@@ -35,7 +70,6 @@
         /* --- ESTILOS RULETA --- */
         .roulette-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
         .wheel { width: 100%; height: 100%; border-radius: 50%; border: 5px solid white; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); position: relative; overflow: hidden; background: #333;}
-        .wheel-segment { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: polygon(50% 50%, 50% 0, 100% 0); transform-origin: 50% 50%; display:flex; justify-content:center; padding-top:20px; font-weight:bold; text-shadow: 1px 1px 2px black;}
         .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #e94560; z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
 
         @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
@@ -44,9 +78,9 @@
 <body>
 
     <div id="modeSelect" class="card">
-        <h2>Bienvenido</h2>
+        <h2 style="margin-bottom: 30px;">Bienvenido</h2>
         <button onclick="initHost()">📺 CREAR SALA (TV)</button>
-        <button onclick="initPlayerManual()">📱 UNIRSE A SALA</button>
+        <button onclick="initPlayerManual()" style="background: #3498db;">📱 UNIRSE A SALA</button>
     </div>
 
     <div id="hostView" class="hidden">
@@ -94,15 +128,19 @@
 
     <div id="playerView" class="hidden" style="width: 100%;">
         <div id="loginScreen" class="card">
-            <h2>Unirse al Juego</h2>
-            <input type="text" id="roomInput" placeholder="Código (4 letras)" style="text-transform:uppercase; letter-spacing: 5px;">
-            <input type="text" id="username" placeholder="Tu Nombre" style="margin-top:10px;">
-            <button onclick="joinGame()">ENTRAR</button>
+            <h2 style="margin-bottom: 25px;">Unirse al Juego</h2>
+            
+            <input type="text" id="roomInput" placeholder="CÓDIGO (4 LETRAS)" style="text-transform:uppercase; letter-spacing: 3px; font-weight: bold;">
+            <input type="text" id="username" placeholder="Tu Nombre">
+            
+            <button onclick="joinGame()">ENTRAR 🚀</button>
+            <p id="errorMsg" style="color:#e74c3c; margin-top:10px; font-weight:bold;"></p>
         </div>
+
         <div id="waitingScreen" class="card hidden">
             <h2>¡Estás dentro!</h2>
             <p>Mira la TV...</p>
-            <div style="font-size: 3em;">👀</div>
+            <div style="font-size: 3em; animation: popIn 1s infinite alternate;">👀</div>
         </div>
         <div id="roleScreen" class="card hidden">
             <h3 id="roleTitle">TU ROL:</h3>
@@ -137,6 +175,9 @@
                 document.getElementById('playerView').classList.remove('hidden');
                 document.getElementById('roomInput').value = roomParam;
                 document.getElementById('roomInput').disabled = true;
+                // Efecto visual para indicar que el código ya está puesto
+                document.getElementById('roomInput').style.opacity = "0.7";
+                document.getElementById('roomInput').style.border = "2px solid #2ecc71";
             }
         };
 
@@ -175,10 +216,19 @@
             const code = document.getElementById('roomInput').value.toUpperCase();
             if(name && code.length === 4) {
                 socket.emit('joinGame', { name: name, roomCode: code });
-            } else { alert("Faltan datos"); }
+            } else { 
+                // Animación de error visual en el botón
+                const btn = document.querySelector('#loginScreen button');
+                btn.style.background = "#e74c3c";
+                btn.innerText = "¡FALTAN DATOS!";
+                setTimeout(() => { btn.style.background = "#e94560"; btn.innerText = "ENTRAR 🚀"; }, 1000);
+            }
         }
 
-        socket.on('errorMsg', (msg) => alert(msg));
+        socket.on('errorMsg', (msg) => {
+            document.getElementById('errorMsg').innerText = msg;
+        });
+
         socket.on('updatePlayerList', (players) => {
             if(!isHost && !document.getElementById('loginScreen').classList.contains('hidden')) {
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -272,7 +322,6 @@
                 // JUGADORES
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
-                // Esperar un poco si hay empate para que coincida con la ruleta
                 if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
                 else alert("Expulsado: " + res.expelled);
             }
@@ -293,35 +342,8 @@
             wheel.innerHTML = ''; // Limpiar
             const count = players.length;
             const degPerSeg = 360 / count;
-            
-            // Colores para la ruleta
             const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
 
-            // Crear segmentos visuales
-            players.forEach((p, i) => {
-                const seg = document.createElement('div');
-                seg.className = 'wheel-segment';
-                // Usamos Conic Gradient en el contenedor padre o rotamos segmentos.
-                // Método simple: divs absolutos rotados
-                seg.style.transform = `rotate(${i * degPerSeg}deg)`;
-                seg.style.background = colors[i % colors.length];
-                // Ajustar clip-path para que parezca rebanada de pastel
-                if (count > 1) {
-                    // Cálculo aproximado para clip-path según ángulo
-                    const skew = 90 - degPerSeg;
-                    // Simplificación: usaremos solo divs rectangulares rotados y centrados texto
-                }
-                
-                // Texto
-                const span = document.createElement('span');
-                span.innerText = p;
-                span.style.display = "block";
-                span.style.transform = `rotate(0deg)`; // Ajuste visual
-                seg.appendChild(span);
-                wheel.appendChild(seg);
-            });
-            
-            // Método más robusto para dibujar el círculo de colores (Conic Gradient)
             let gradient = "conic-gradient(";
             players.forEach((p, i) => {
                 gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `;
@@ -329,8 +351,7 @@
             gradient = gradient.slice(0, -2) + ")";
             wheel.style.background = gradient;
             
-            // Ahora ponemos los nombres encima
-            wheel.innerHTML = ""; // Limpiamos para redibujar solo nombres
+            wheel.innerHTML = "";
             players.forEach((p, i) => {
                 const label = document.createElement('div');
                 label.innerText = p;
@@ -338,28 +359,20 @@
                 label.style.top = '50%';
                 label.style.left = '50%';
                 label.style.transformOrigin = '0 0';
-                // Calcular posición en el borde
-                const angle = i * degPerSeg + (degPerSeg / 2); // Centro del segmento
-                // Mover texto al borde
-                label.style.transform = `rotate(${angle - 90}deg) translate(80px)`; // -90 para alinear arriba
-                label.style.width = "100px";
+                const angle = i * degPerSeg + (degPerSeg / 2); 
+                label.style.transform = `rotate(${angle - 90}deg) translate(60px)`;
+                label.style.width = "120px";
                 label.style.textAlign = "center";
                 label.style.fontWeight = "bold";
                 label.style.textShadow = "0 0 3px black";
+                label.style.pointerEvents = "none";
                 wheel.appendChild(label);
             });
 
-            // CALCULAR GIRO
-            // Queremos que "winner" quede arriba (apuntado por la flecha en 0 grados)
-            // El puntero está arriba.
             const winnerIndex = players.indexOf(winner);
             const winnerCenterAngle = winnerIndex * degPerSeg + (degPerSeg / 2);
-            
-            // Para que el ángulo quede arriba (0 deg), tenemos que rotar la ruleta en negativo
-            // Agregamos 5 vueltas completas (1800 deg)
             const totalRotation = 1800 + (360 - winnerCenterAngle);
             
-            // Forzar reflow para reiniciar animación si hace falta
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
             setTimeout(() => {
@@ -367,7 +380,6 @@
                 wheel.style.transform = `rotate(${totalRotation}deg)`;
             }, 50);
 
-            // Esperar a que termine
             setTimeout(callback, 4500);
         }
 
