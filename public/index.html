@@ -17,7 +17,7 @@
         .hidden { display: none !important; }
         
         /* BOTONES */
-        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4); }
+        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4); }
         button:hover { background: #ff5e78; transform: scale(1.02); }
         button:active { transform: scale(0.95); }
 
@@ -45,6 +45,7 @@
 
         /* TEXTOS */
         .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .help-text { font-size: 0.9em; color: #a2a8d3; margin-top: 5px; margin-bottom: 20px; line-height: 1.4; }
         
         /* Host Specific */
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
@@ -72,9 +73,19 @@
 <body>
 
     <div id="modeSelect" class="card">
-        <h2 style="margin-bottom: 30px;">Bienvenido</h2>
-        <button onclick="initHost()">📺 CREAR SALA (TV)</button>
-        <button onclick="initPlayerManual()" style="background: #3498db;">📱 UNIRSE A SALA</button>
+        <h1 style="color:#f1c40f; margin-bottom: 5px;">EL IMPOSTOR</h1>
+        <p style="margin-top:0; color:#ccc;">¿En qué dispositivo estás?</p>
+        <hr style="border-color:#333; margin: 20px 0;">
+
+        <div style="margin-bottom: 30px;">
+            <button onclick="initHost()">📺 SOY LA TV (CREAR)</button>
+            <p class="help-text">Elige esto en tu <strong>Computadora o Smart TV</strong>.<br>Aquí se verá el tablero principal.</p>
+        </div>
+
+        <div>
+            <button onclick="initPlayerManual()" style="background: #3498db;">📱 SOY JUGADOR (UNIRSE)</button>
+            <p class="help-text">Elige esto en tu <strong>Celular</strong>.<br>Aquí recibirás tu palabra secreta y votarás.</p>
+        </div>
     </div>
 
     <div id="hostView" class="hidden">
@@ -88,17 +99,11 @@
         <button onclick="startGame()" id="btnStart">COMENZAR JUEGO</button>
 
         <div id="gameInstructions" style="margin-top: 40px; text-align: left; max-width: 700px; color: #ccc; font-size: 0.9em; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-left: auto; margin-right: auto;">
-            <h3 style="color: #f1c40f; border-bottom: 1px solid #555; padding-bottom: 10px; margin-top:0;">¿Cómo jugar "El Impostor"?</h3>
-            
-            <p><strong>1. Conexión:</strong> Todos escanean el QR o entran a la web con el código de sala.</p>
-            
-            <p><strong>2. Los Roles:</strong> Al iniciar, recibirán una <strong>Palabra Secreta</strong> (ej: "Playa"), excepto <strong>El Impostor</strong>, que no sabe nada.</p>
-            
-            <p><strong>3. El Debate:</strong> Por turnos, digan una palabra relacionada. 
-            <em>Ej: Si es "Playa", di "Arena".</em> 
-            ¡Si eres muy obvio, el Impostor adivinará! Si eres muy vago, te acusarán.</p>
-            
-            <p><strong>4. Votación:</strong> Al acabar el tiempo, voten para expulsar al sospechoso.</p>
+            <h3 style="color: #f1c40f; border-bottom: 1px solid #555; padding-bottom: 10px; margin-top:0;">¿Cómo jugar?</h3>
+            <p><strong>1. Conexión:</strong> Escaneen el QR con su cámara o usen el código.</p>
+            <p><strong>2. Roles:</strong> Todos reciben una palabra secreta, menos el <strong>Impostor</strong>.</p>
+            <p><strong>3. Debate:</strong> Digan una palabra relacionada. ¡El Impostor debe fingir que sabe!</p>
+            <p><strong>4. Votación:</strong> Al terminar el tiempo, expulsen al sospechoso.</p>
         </div>
         
         <div id="hostGameScreen" class="hidden" style="margin-top:30px; border-top: 1px solid #444; padding-top:20px;">
@@ -246,7 +251,7 @@
         socket.on('gameStartedMain', (data) => {
             if(isHost) {
                 document.getElementById('btnStart').classList.add('hidden');
-                document.getElementById('gameInstructions').classList.add('hidden'); // Ocultar instrucciones al jugar
+                document.getElementById('gameInstructions').classList.add('hidden'); // Ocultar instrucciones
                 document.getElementById('hostGameScreen').classList.remove('hidden');
                 document.getElementById('hostCategory').innerText = data.category;
                 document.getElementById('hostStarter').innerText = data.start;
@@ -397,7 +402,7 @@
                 document.getElementById('hostRouletteScreen').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('btnStart').classList.remove('hidden');
-                document.getElementById('gameInstructions').classList.remove('hidden'); // Mostrar instrucciones de nuevo
+                document.getElementById('gameInstructions').classList.remove('hidden'); // Mostrar instrucciones
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.add('hidden');
