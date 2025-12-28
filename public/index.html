@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006" crossorigin="anonymous"></script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Impostor</title>
@@ -12,21 +11,17 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px;}
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; overflow-x: hidden;}
         .card { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(233, 69, 96, 0.2); width: 90%; max-width: 500px; margin-bottom: 20px; border: 1px solid #0f3460; }
         .hidden { display: none !important; }
         button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-        button:hover { background: #ff5e78; }
-        input { padding: 15px; width: 80%; border-radius: 10px; border: none; text-align: center; font-size: 1.2em; margin-bottom: 10px; background: #0f3460; color: white; }
-        
-        /* Room Code Styles */
         .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase;}
         
         /* Host Specific */
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; margin: 5px; display:inline-block; font-weight: bold; animation: popIn 0.3s; }
         
-        /* Player Roles */
+        /* Roles */
         .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
         .impostor { background: #c0392b; }
         .citizen { background: #27ae60; }
@@ -36,6 +31,12 @@
         .vote-btn { background: #34495e; margin: 5px; padding: 15px; width: 100%; font-size: 1.2em; color: white; border: 2px solid #2c3e50; border-radius: 10px; }
         .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
         .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
+
+        /* --- ESTILOS RULETA --- */
+        .roulette-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 5px solid white; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); position: relative; overflow: hidden; background: #333;}
+        .wheel-segment { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: polygon(50% 50%, 50% 0, 100% 0); transform-origin: 50% 50%; display:flex; justify-content:center; padding-top:20px; font-weight:bold; text-shadow: 1px 1px 2px black;}
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #e94560; z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
 
         @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
     </style>
@@ -51,12 +52,9 @@
     <div id="hostView" class="hidden">
         <p style="margin-bottom:0; color:#aaa;">CÓDIGO DE SALA:</p>
         <div id="displayRoomCode" class="room-code">...</div>
-        
         <div id="qrCode"></div>
-        
         <h3>Jugadores: <span id="count">0</span></h3>
         <div id="playerList"></div>
-        
         <br>
         <button onclick="startGame()" id="btnStart">COMENZAR JUEGO</button>
         
@@ -67,7 +65,6 @@
                 <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
-            
             <button onclick="triggerVoting()" style="background: #e67e22; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
         </div>
 
@@ -75,6 +72,15 @@
             <h1>🗳️ ¡VOTEN AHORA!</h1>
             <div class="vote-count"><span id="votesIn">0</span> / <span id="totalPlayers">0</span></div>
             <div class="bar-container"><div id="progressBar" class="bar-fill"></div></div>
+        </div>
+
+        <div id="hostRouletteScreen" class="hidden">
+            <h1 style="color:#e94560">¡EMPATE! 😱</h1>
+            <p>Girando la ruleta de la muerte...</p>
+            <div class="roulette-container">
+                <div class="pointer"></div>
+                <div class="wheel" id="wheel"></div>
+            </div>
         </div>
 
         <div id="hostResultScreen" class="hidden">
@@ -87,21 +93,17 @@
     </div>
 
     <div id="playerView" class="hidden" style="width: 100%;">
-        
         <div id="loginScreen" class="card">
             <h2>Unirse al Juego</h2>
-            <input type="text" id="roomInput" placeholder="Código de Sala (4 letras)" style="text-transform:uppercase; letter-spacing: 5px;">
+            <input type="text" id="roomInput" placeholder="Código (4 letras)" style="text-transform:uppercase; letter-spacing: 5px;">
             <input type="text" id="username" placeholder="Tu Nombre" style="margin-top:10px;">
             <button onclick="joinGame()">ENTRAR</button>
-            <p id="errorMsg" style="color:red"></p>
         </div>
-
         <div id="waitingScreen" class="card hidden">
             <h2>¡Estás dentro!</h2>
             <p>Mira la TV...</p>
             <div style="font-size: 3em;">👀</div>
         </div>
-
         <div id="roleScreen" class="card hidden">
             <h3 id="roleTitle">TU ROL:</h3>
             <div id="roleCardBox" class="role-card">
@@ -110,12 +112,10 @@
             </div>
             <p style="color:#a2a8d3;">Categoría: <span id="playerCategory"></span></p>
         </div>
-
         <div id="playerVotingScreen" class="hidden">
             <h2>¿Quién es el Impostor?</h2>
             <div id="voteButtonsContainer"></div>
         </div>
-
         <div id="playerWaitScreen" class="hidden">
             <div class="card">
                 <h2>Voto enviado ✅</h2>
@@ -128,23 +128,22 @@
         let isHost = false;
         let myRoomCode = "";
 
-        // Revisar si venimos de un QR (parametro ?room=XXXX)
+        // Detectar QR
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
             if (roomParam) {
-                // Es un jugador escaneando QR
                 document.getElementById('modeSelect').classList.add('hidden');
                 document.getElementById('playerView').classList.remove('hidden');
                 document.getElementById('roomInput').value = roomParam;
-                document.getElementById('roomInput').disabled = true; // Bloquear campo
+                document.getElementById('roomInput').disabled = true;
             }
         };
 
         // --- HOST ---
         function initHost() {
             isHost = true;
-            socket.emit('createGame'); // Pedir sala al servidor
+            socket.emit('createGame');
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('hostView').classList.remove('hidden');
         }
@@ -152,14 +151,9 @@
         socket.on('gameCreated', (code) => {
             myRoomCode = code;
             document.getElementById('displayRoomCode').innerText = code;
-            
-            // Generar QR que incluye el código en la URL
             const url = window.location.protocol + '//' + window.location.host + '/?room=' + code;
             document.getElementById('qrCode').innerHTML = "";
-            new QRCode(document.getElementById("qrCode"), {
-                text: url,
-                width: 200, height: 200
-            });
+            new QRCode(document.getElementById("qrCode"), { text: url, width: 200, height: 200 });
         });
 
         socket.on('updatePlayerList', (players) => {
@@ -168,9 +162,7 @@
             document.getElementById('playerList').innerHTML = players.map(p => `<span class="player-badge">${p.name}</span>`).join('');
         });
 
-        function startGame() {
-            socket.emit('startGameLogic');
-        }
+        function startGame() { socket.emit('startGameLogic'); }
 
         // --- JUGADOR ---
         function initPlayerManual() {
@@ -181,21 +173,12 @@
         function joinGame() {
             const name = document.getElementById('username').value;
             const code = document.getElementById('roomInput').value.toUpperCase();
-            
             if(name && code.length === 4) {
                 socket.emit('joinGame', { name: name, roomCode: code });
-            } else {
-                alert("Escribe tu nombre y el código de 4 letras");
-            }
+            } else { alert("Faltan datos"); }
         }
 
-        socket.on('errorMsg', (msg) => {
-            alert(msg);
-        });
-
-        // Respuesta al unirse (si fue exitoso, el servidor manda updatePlayerList a la sala)
-        // Usamos roleAssign como confirmación de inicio de juego, pero necesitamos confirmación de unión.
-        // Haremos un truco: si recibimos 'updatePlayerList' y somos jugador y estamos en login, pasamos a wait.
+        socket.on('errorMsg', (msg) => alert(msg));
         socket.on('updatePlayerList', (players) => {
             if(!isHost && !document.getElementById('loginScreen').classList.contains('hidden')) {
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -203,28 +186,24 @@
             }
         });
 
-        // --- LÓGICA DE JUEGO (COMÚN) ---
+        // --- JUEGO ---
         socket.on('gameStartedMain', (data) => {
             if(isHost) {
                 document.getElementById('btnStart').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.remove('hidden');
                 document.getElementById('hostCategory').innerText = data.category;
                 document.getElementById('hostStarter').innerText = data.start;
-                
                 speak("La categoría es " + data.category + ". Empieza " + data.start);
                 startTimer(300);
             }
         });
 
         socket.on('roleAssign', (data) => {
-            // Pantalla de Jugador
             document.getElementById('waitingScreen').classList.add('hidden');
-            document.getElementById('playerWaitScreen').classList.add('hidden'); // Reset por si acaso
+            document.getElementById('playerWaitScreen').classList.add('hidden');
             document.getElementById('roleScreen').classList.remove('hidden');
-
             document.getElementById('playerCategory').innerText = data.category;
             const card = document.getElementById('roleCardBox');
-            
             if (data.role === 'Impostor') {
                 card.className = 'role-card impostor';
                 document.getElementById('secretWord').innerText = "IMPOSTOR";
@@ -276,19 +255,121 @@
 
         socket.on('votingCompleted', (res) => {
             if(isHost) {
-                document.getElementById('hostVotingScreen').classList.add('hidden');
-                document.getElementById('hostResultScreen').classList.remove('hidden');
-                document.getElementById('expelledName').innerText = res.expelled;
-                document.getElementById('revealWord').innerText = res.secret;
-                
-                speak("El expulsado es " + res.expelled + ". La palabra era " + res.secret);
-                fireConfetti();
+                if (res.isTie) {
+                    // MOSTRAR RULETA
+                    document.getElementById('hostVotingScreen').classList.add('hidden');
+                    document.getElementById('hostRouletteScreen').classList.remove('hidden');
+                    speak("¡Tenemos un empate! Que gire la ruleta.");
+                    spinWheel(res.tiedPlayers, res.expelled, () => {
+                        showFinalResult(res);
+                    });
+                } else {
+                    // SIN EMPATE
+                    document.getElementById('hostVotingScreen').classList.add('hidden');
+                    showFinalResult(res);
+                }
             } else {
+                // JUGADORES
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
-                alert("Expulsado: " + res.expelled + "\nPalabra: " + res.secret);
+                // Esperar un poco si hay empate para que coincida con la ruleta
+                if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
+                else alert("Expulsado: " + res.expelled);
             }
         });
+
+        function showFinalResult(res) {
+            document.getElementById('hostRouletteScreen').classList.add('hidden');
+            document.getElementById('hostResultScreen').classList.remove('hidden');
+            document.getElementById('expelledName').innerText = res.expelled;
+            document.getElementById('revealWord').innerText = res.secret;
+            speak("El expulsado es " + res.expelled + ". La palabra era " + res.secret);
+            fireConfetti();
+        }
+
+        // --- LÓGICA DE LA RULETA VISUAL ---
+        function spinWheel(players, winner, callback) {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = ''; // Limpiar
+            const count = players.length;
+            const degPerSeg = 360 / count;
+            
+            // Colores para la ruleta
+            const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
+
+            // Crear segmentos visuales
+            players.forEach((p, i) => {
+                const seg = document.createElement('div');
+                seg.className = 'wheel-segment';
+                // Usamos Conic Gradient en el contenedor padre o rotamos segmentos.
+                // Método simple: divs absolutos rotados
+                seg.style.transform = `rotate(${i * degPerSeg}deg)`;
+                seg.style.background = colors[i % colors.length];
+                // Ajustar clip-path para que parezca rebanada de pastel
+                if (count > 1) {
+                    // Cálculo aproximado para clip-path según ángulo
+                    const skew = 90 - degPerSeg;
+                    // Simplificación: usaremos solo divs rectangulares rotados y centrados texto
+                }
+                
+                // Texto
+                const span = document.createElement('span');
+                span.innerText = p;
+                span.style.display = "block";
+                span.style.transform = `rotate(0deg)`; // Ajuste visual
+                seg.appendChild(span);
+                wheel.appendChild(seg);
+            });
+            
+            // Método más robusto para dibujar el círculo de colores (Conic Gradient)
+            let gradient = "conic-gradient(";
+            players.forEach((p, i) => {
+                gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `;
+            });
+            gradient = gradient.slice(0, -2) + ")";
+            wheel.style.background = gradient;
+            
+            // Ahora ponemos los nombres encima
+            wheel.innerHTML = ""; // Limpiamos para redibujar solo nombres
+            players.forEach((p, i) => {
+                const label = document.createElement('div');
+                label.innerText = p;
+                label.style.position = 'absolute';
+                label.style.top = '50%';
+                label.style.left = '50%';
+                label.style.transformOrigin = '0 0';
+                // Calcular posición en el borde
+                const angle = i * degPerSeg + (degPerSeg / 2); // Centro del segmento
+                // Mover texto al borde
+                label.style.transform = `rotate(${angle - 90}deg) translate(80px)`; // -90 para alinear arriba
+                label.style.width = "100px";
+                label.style.textAlign = "center";
+                label.style.fontWeight = "bold";
+                label.style.textShadow = "0 0 3px black";
+                wheel.appendChild(label);
+            });
+
+            // CALCULAR GIRO
+            // Queremos que "winner" quede arriba (apuntado por la flecha en 0 grados)
+            // El puntero está arriba.
+            const winnerIndex = players.indexOf(winner);
+            const winnerCenterAngle = winnerIndex * degPerSeg + (degPerSeg / 2);
+            
+            // Para que el ángulo quede arriba (0 deg), tenemos que rotar la ruleta en negativo
+            // Agregamos 5 vueltas completas (1800 deg)
+            const totalRotation = 1800 + (360 - winnerCenterAngle);
+            
+            // Forzar reflow para reiniciar animación si hace falta
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+            }, 50);
+
+            // Esperar a que termine
+            setTimeout(callback, 4500);
+        }
 
         // --- RESET ---
         function resetGame() { socket.emit('resetGame'); }
@@ -296,6 +377,7 @@
         socket.on('resetClient', () => {
             if(isHost) {
                 document.getElementById('hostResultScreen').classList.add('hidden');
+                document.getElementById('hostRouletteScreen').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('btnStart').classList.remove('hidden');
             } else {
@@ -310,23 +392,15 @@
             const display = document.getElementById('timer');
             let timer = duration, minutes, seconds;
             let interval = setInterval(function () {
-                if(!isHost) { clearInterval(interval); return; } // Seguridad
-                
+                if(!isHost) { clearInterval(interval); return; }
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
-
                 minutes = minutes < 10 ? "0" + minutes : minutes;
                 seconds = seconds < 10 ? "0" + seconds : seconds;
-
                 display.textContent = minutes + ":" + seconds;
-
                 if(timer === 60) speak("Queda un minuto");
                 if(timer === 10) speak("Diez segundos");
-                
-                if (--timer < 0) {
-                    clearInterval(interval);
-                    speak("Tiempo terminado");
-                }
+                if (--timer < 0) { clearInterval(interval); speak("Tiempo terminado"); }
             }, 1000);
         }
 

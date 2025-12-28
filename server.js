@@ -194,7 +194,6 @@ const words = [
 
 ];
 
-// Función para generar ID de sala (4 letras)
 function makeId(length) {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -206,10 +205,9 @@ function makeId(length) {
 
 io.on("connection", (socket) => {
     
-    // 1. CREAR SALA (HOST)
+    // 1. CREAR SALA
     socket.on("createGame", () => {
-        const roomCode = makeId(4); // Generar código ej: "AX9B"
-        // Crear la sala en memoria
+        const roomCode = makeId(4);
         games[roomCode] = { 
             players: [], 
             started: false, 
@@ -217,17 +215,14 @@ io.on("connection", (socket) => {
             secret: '', 
             hostId: socket.id 
         };
-        
-        socket.join(roomCode); // Unir Host a la sala Socket.io
-        socket.roomCode = roomCode; // Guardar código en el socket del Host
-        
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
         socket.emit("gameCreated", roomCode);
-        console.log(`Sala creada: ${roomCode}`);
     });
 
-    // 2. UNIRSE A SALA (JUGADOR)
+    // 2. UNIRSE A SALA
     socket.on("joinGame", ({ name, roomCode }) => {
-        roomCode = roomCode.toUpperCase(); // Asegurar mayúsculas
+        roomCode = roomCode.toUpperCase();
         const room = games[roomCode];
 
         if (!room) {
@@ -239,14 +234,12 @@ io.on("connection", (socket) => {
             return;
         }
 
-        // Agregar jugador
         const player = { id: socket.id, name: name, role: "citizen" };
         room.players.push(player);
         
-        socket.join(roomCode); // Unir socket a la sala
-        socket.roomCode = roomCode; // Guardar referencia
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
 
-        // Avisar a todos en esa sala (incluido el Host)
         io.to(roomCode).emit("updatePlayerList", room.players);
     });
 
@@ -256,18 +249,15 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
 
-        // Mínimo 1 jugador para pruebas (cámbialo a 3 para producción)
-        if (room.players.length < 1) return; 
+        if (room.players.length < 1) return; // Mínimo 1 para pruebas
 
         room.started = true;
         
-        // Elegir palabra y roles
         const selected = words[Math.floor(Math.random() * words.length)];
-        room.secret = selected.word; // Guardar secreto
+        room.secret = selected.word;
         const imposterIndex = Math.floor(Math.random() * room.players.length);
         const startingPlayer = room.players[Math.floor(Math.random() * room.players.length)].name;
 
-        // Repartir roles
         room.players.forEach((p, index) => {
             if (index === imposterIndex) {
                 io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
@@ -279,11 +269,11 @@ io.on("connection", (socket) => {
         io.to(code).emit("gameStartedMain", { category: selected.cat, start: startingPlayer });
     });
 
-    // 4. VOTACIONES
+    // 4. VOTACIONES CON EMPATE
     socket.on("startVoting", () => {
         const code = socket.roomCode;
         if(games[code]) {
-            games[code].votes = {}; // Reiniciar votos
+            games[code].votes = {};
             io.to(code).emit("votingPhaseStarted", games[code].players);
         }
     });
@@ -297,31 +287,46 @@ io.on("connection", (socket) => {
 
         const totalVotes = Object.keys(room.votes).length;
         
-        // Avisar SOLO al Host de esa sala
         io.to(room.hostId).emit("updateVoteCount", { 
             current: totalVotes, 
             total: room.players.length 
         });
 
-        // Si todos votaron
         if (totalVotes === room.players.length) {
+            // Contar votos
             let counts = {};
             let maxVotes = 0;
-            let expelled = "";
 
             Object.values(room.votes).forEach(name => {
                 counts[name] = (counts[name] || 0) + 1;
-                if (counts[name] > maxVotes) {
-                    maxVotes = counts[name];
-                    expelled = name;
-                }
+                if (counts[name] > maxVotes) maxVotes = counts[name];
             });
+
+            // Buscar quiénes empataron con el máximo de votos
+            let candidates = Object.keys(counts).filter(name => counts[name] === maxVotes);
+
+            let expelled = "";
+            let isTie = false;
+
+            if (candidates.length > 1) {
+                // ¡EMPATE! Elegir uno al azar entre los empatados
+                isTie = true;
+                expelled = candidates[Math.floor(Math.random() * candidates.length)];
+            } else {
+                expelled = candidates[0];
+            }
             
-            io.to(code).emit("votingCompleted", { expelled: expelled, secret: room.secret });
+            // Enviamos la lista de candidatos (tiedPlayers) para la ruleta
+            io.to(code).emit("votingCompleted", { 
+                expelled: expelled, 
+                secret: room.secret,
+                isTie: isTie,
+                tiedPlayers: candidates 
+            });
         }
     });
 
-    // 5. REINICIAR (SOLO ESA SALA)
+    // 5. REINICIAR
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
@@ -332,16 +337,11 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 6. DESCONEXIÓN
     socket.on("disconnect", () => {
         const code = socket.roomCode;
         if(code && games[code]) {
-            // Quitar jugador de la lista
             games[code].players = games[code].players.filter(p => p.id !== socket.id);
-            
-            // Si el que se fue es el Host, destruir sala (opcional, por ahora solo avisamos)
             if(games[code].hostId === socket.id) {
-                // Sala abandonada
                 delete games[code];
             } else {
                 io.to(code).emit("updatePlayerList", games[code].players);
