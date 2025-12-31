@@ -26,9 +26,21 @@
         
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; margin: 5px; display:inline-block; font-weight: bold; animation: popIn 0.3s; }
-        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; transition: all 0.3s; }
-        .impostor { background: #c0392b; }
-        .citizen { background: #27ae60; }
+        
+        /* --- ESTILOS DE TARJETA MEJORADOS --- */
+        .role-card { 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-top: 20px; 
+            border: 2px solid white; 
+            transition: all 0.3s;
+            background: #2c3e50; /* Color Neutro por defecto */
+        }
+        
+        /* Solo se colorean si tienen la clase .revealed */
+        .role-card.revealed.impostor { background: #c0392b; }
+        .role-card.revealed.citizen { background: #27ae60; }
+        
         .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
         
         .vote-btn { background: #34495e; margin: 5px; padding: 15px; width: 100%; font-size: 1.2em; color: white; border: 2px solid #2c3e50; border-radius: 10px; }
@@ -247,21 +259,24 @@
             }
         });
 
-        // --- LÓGICA DE MOSTRAR/OCULTAR ROL ---
+        // --- LÓGICA DE MOSTRAR/OCULTAR ROL Y COLOR ---
         function toggleRole() {
             const cover = document.getElementById('roleCover');
             const content = document.getElementById('roleContent');
             const btn = document.getElementById('btnToggleRole');
+            const card = document.getElementById('roleCardBox');
             
             if (cover.classList.contains('hidden')) {
-                // Ocultar
+                // OCULTAR (Se va el color)
                 cover.classList.remove('hidden');
                 content.classList.add('hidden');
+                card.classList.remove('revealed'); // Quitamos color
                 btn.innerText = "👁️ MOSTRAR ROL";
             } else {
-                // Mostrar
+                // MOSTRAR (Viene el color)
                 cover.classList.add('hidden');
                 content.classList.remove('hidden');
+                card.classList.add('revealed'); // Ponemos color
                 btn.innerText = "🙈 OCULTAR ROL";
             }
         }
@@ -271,19 +286,23 @@
             document.getElementById('playerWaitScreen').classList.add('hidden');
             document.getElementById('roleScreen').classList.remove('hidden');
             
-            // RESETEAR ESTADO VISUAL: Siempre oculto al inicio
+            // RESETEAR ESTADO VISUAL: Siempre oculto y sin color al inicio
             document.getElementById('roleCover').classList.remove('hidden');
             document.getElementById('roleContent').classList.add('hidden');
             document.getElementById('btnToggleRole').innerText = "👁️ MOSTRAR ROL";
+            
+            const card = document.getElementById('roleCardBox');
+            card.classList.remove('revealed'); // Asegurar que empieza gris
 
             document.getElementById('playerCategory').innerText = data.category;
-            const card = document.getElementById('roleCardBox');
             
             if (data.role === 'Impostor') {
+                // Asignamos clase impostor pero NO se verá roja hasta que tenga .revealed
                 card.className = 'role-card impostor';
                 document.getElementById('secretWord').innerText = "IMPOSTOR";
                 document.getElementById('roleDesc').innerText = "¡Finge que sabes la palabra!";
             } else {
+                // Asignamos clase citizen pero NO se verá verde hasta que tenga .revealed
                 card.className = 'role-card citizen';
                 document.getElementById('secretWord').innerText = data.word;
                 document.getElementById('roleDesc').innerText = "Descubre al mentiroso.";
@@ -347,9 +366,12 @@
             } else {
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
-                // Al volver, mantener oculto el rol
+                
+                // Al volver, mantener oculto el rol y el color
                 document.getElementById('roleCover').classList.remove('hidden');
                 document.getElementById('roleContent').classList.add('hidden');
+                document.getElementById('roleCardBox').classList.remove('revealed');
+                document.getElementById('btnToggleRole').innerText = "👁️ MOSTRAR ROL";
                 
                 if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
                 else alert("Expulsado: " + res.expelled);
