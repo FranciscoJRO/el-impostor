@@ -213,37 +213,42 @@ io.on("connection", (socket) => {
             votes: {}, 
             secret: '', 
             hostId: socket.id,
-            category: '' // Guardamos la categoría actual
+            category: ''
         };
         socket.join(roomCode);
         socket.roomCode = roomCode;
         socket.emit("gameCreated", roomCode);
     });
 
-    // 2. UNIRSE O RE-CONECTARSE
+    // 2. UNIRSE O RECONECTARSE (CORREGIDO)
     socket.on("joinGame", ({ name, roomCode }) => {
-        roomCode = roomCode.toUpperCase();
-        const room = games[roomCode];
+        if (!name || !roomCode) return;
+        
+        // Limpiamos el nombre (quitamos espacios extra)
+        const cleanName = name.trim();
+        const cleanCode = roomCode.toUpperCase().trim();
+        
+        const room = games[cleanCode];
 
         if (!room) {
-            socket.emit("errorMsg", "Esa sala no existe.");
+            socket.emit("errorMsg", "Sala no encontrada.");
             return;
         }
 
-        // Buscar si el jugador ya existía (por nombre)
-        const existingPlayer = room.players.find(p => p.name === name);
+        // ¿Ya existe este jugador? (Buscamos por nombre)
+        const existingPlayer = room.players.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
 
         if (existingPlayer) {
-            // --- LÓGICA DE RECONEXIÓN ---
-            // Actualizamos su ID de socket porque el viejo ya murió
-            existingPlayer.id = socket.id;
+            // ¡ES UNA RECONEXIÓN!
+            console.log(`Jugador reconectado: ${cleanName}`);
+            existingPlayer.id = socket.id; // Actualizamos su ID de socket
             existingPlayer.connected = true;
             
-            socket.join(roomCode);
-            socket.roomCode = roomCode;
-            socket.username = name; // Guardar nombre en el socket para desconexiones futuras
+            socket.join(cleanCode);
+            socket.roomCode = cleanCode;
+            socket.username = cleanName;
 
-            // Si el juego ya empezó, le devolvemos su rol
+            // Si el juego ya corría, le devolvemos su rol inmediatamente
             if (room.started) {
                 if (existingPlayer.role === "Impostor") {
                     socket.emit("roleAssign", { role: "Impostor", category: room.category, start: "..." });
@@ -251,11 +256,13 @@ io.on("connection", (socket) => {
                     socket.emit("roleAssign", { role: "Ciudadano", category: room.category, word: room.secret, start: "..." });
                 }
             } else {
-                // Si estamos en el lobby, avisar que volvió
+                // Si estamos en lobby, solo avisamos que está dentro
                 socket.emit("updatePlayerList", room.players);
+                // Forzamos al cliente a ir a la pantalla de espera
+                socket.emit("forceWaitScreen");
             }
         } else {
-            // --- JUGADOR NUEVO ---
+            // ¡ES NUEVO!
             if (room.started) {
                 socket.emit("errorMsg", "La partida ya empezó.");
                 return;
@@ -263,18 +270,19 @@ io.on("connection", (socket) => {
 
             const player = { 
                 id: socket.id, 
-                name: name, 
+                name: cleanName, 
                 role: "citizen", 
                 connected: true 
             };
             room.players.push(player);
             
-            socket.join(roomCode);
-            socket.roomCode = roomCode;
-            socket.username = name;
+            socket.join(cleanCode);
+            socket.roomCode = cleanCode;
+            socket.username = cleanName;
         }
 
-        io.to(roomCode).emit("updatePlayerList", room.players);
+        // Actualizamos la lista para todos (esto evita duplicados visuales)
+        io.to(cleanCode).emit("updatePlayerList", room.players);
     });
 
     // 3. INICIAR JUEGO
@@ -282,25 +290,21 @@ io.on("connection", (socket) => {
         const code = socket.roomCode;
         const room = games[code];
         if(!room) return;
-
-        // Filtrar solo jugadores conectados para asignar roles
-        const activePlayers = room.players.filter(p => p.connected);
-        
-        if (activePlayers.length < 1) return; // Mínimo 1 para pruebas
+        if (room.players.length < 1) return; 
 
         room.started = true;
         
         const selected = words[Math.floor(Math.random() * words.length)];
         room.secret = selected.word;
-        room.category = selected.cat; // Guardar para reconexiones
+        room.category = selected.cat;
 
+        // Solo asignamos roles a los conectados, pero no borramos a los desconectados
+        const activePlayers = room.players.filter(p => p.connected);
         const imposterIndex = Math.floor(Math.random() * activePlayers.length);
         const startingPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)].name;
 
         activePlayers.forEach((p, index) => {
-            // Actualizamos el objeto jugador original en la lista general
             const originalPlayer = room.players.find(pl => pl.name === p.name);
-            
             if (index === imposterIndex) {
                 originalPlayer.role = "Impostor";
                 io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
@@ -318,7 +322,6 @@ io.on("connection", (socket) => {
         const code = socket.roomCode;
         if(games[code]) {
             games[code].votes = {};
-            // Enviamos la lista completa, incluso desconectados, por si vuelven justo a tiempo
             io.to(code).emit("votingPhaseStarted", games[code].players);
         }
     });
@@ -328,97 +331,74 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
 
-        // Verificar que el jugador tenga rol (que sea parte del juego)
         const player = room.players.find(p => p.id === socket.id);
         if(!player) return;
 
-        room.votes[player.name] = voteForName; // Usamos nombre como clave para evitar problemas de ID
+        // Usamos el nombre como clave para evitar duplicados si reconectan
+        room.votes[player.name] = voteForName;
 
-        // Contamos cuántos jugadores *activos* hay vs votos recibidos
         const activeCount = room.players.filter(p => p.connected).length;
         const votesCount = Object.keys(room.votes).length;
         
-        io.to(room.hostId).emit("updateVoteCount", { 
-            current: votesCount, 
-            total: activeCount 
-        });
+        io.to(room.hostId).emit("updateVoteCount", { current: votesCount, total: activeCount });
 
-        // Si ya votaron todos los conectados
-        if (votesCount >= activeCount) {
-            let counts = {};
-            let maxVotes = 0;
-
-            Object.values(room.votes).forEach(name => {
-                counts[name] = (counts[name] || 0) + 1;
-                if (counts[name] > maxVotes) maxVotes = counts[name];
-            });
-
-            let candidates = Object.keys(counts).filter(name => counts[name] === maxVotes);
-            let expelled = "";
-            let isTie = false;
-
-            if (candidates.length > 1) {
-                isTie = true;
-                expelled = candidates[Math.floor(Math.random() * candidates.length)];
-            } else {
-                expelled = candidates[0];
-            }
-            
-            io.to(code).emit("votingCompleted", { 
-                expelled: expelled, 
-                secret: room.secret,
-                isTie: isTie,
-                tiedPlayers: candidates 
-            });
+        if (votesCount >= activeCount && activeCount > 0) {
+            calculateResults(room, code);
         }
     });
 
-    // 5. REINICIAR
+    function calculateResults(room, code) {
+        let counts = {};
+        let maxVotes = 0;
+        Object.values(room.votes).forEach(name => {
+            counts[name] = (counts[name] || 0) + 1;
+            if (counts[name] > maxVotes) maxVotes = counts[name];
+        });
+
+        let candidates = Object.keys(counts).filter(name => counts[name] === maxVotes);
+        let expelled = "";
+        let isTie = false;
+
+        if (candidates.length > 1) {
+            isTie = true;
+            expelled = candidates[Math.floor(Math.random() * candidates.length)];
+        } else {
+            expelled = candidates[0];
+        }
+        
+        io.to(code).emit("votingCompleted", { expelled: expelled, secret: room.secret, isTie: isTie, tiedPlayers: candidates });
+    }
+
+    // 5. REINICIAR (SOLUCIÓN AL PROBLEMA DE REFRESCO)
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
         if(room) {
             room.started = false;
             room.votes = {};
-            // Limpiar roles
             room.players.forEach(p => p.role = "citizen");
+            
+            // Mandamos dos señales: Resetear pantalla y Actualizar lista de espera
             io.to(code).emit("resetClient");
+            io.to(code).emit("updatePlayerList", room.players);
         }
     });
 
-    // 6. DESCONEXIÓN SUAVE
+    // 6. DESCONEXIÓN (YA NO BORRAMOS JUGADORES)
     socket.on("disconnect", () => {
         const code = socket.roomCode;
         if(code && games[code]) {
-            // Si es el HOST, borramos la sala
             if(games[code].hostId === socket.id) {
+                // Si el host se va, ahí sí borramos la sala
                 delete games[code];
-                return;
-            }
-
-            // Si es un JUGADOR, solo marcamos como desconectado
-            const player = games[code].players.find(p => p.id === socket.id);
-            if (player) {
-                player.connected = false;
-                
-                // Opción: Si quieres borrarlos del lobby pero NO de la partida iniciada:
-                if (!games[code].started) {
-                    // Si no ha empezado, lo borramos tras 5 segundos si no vuelve
-                    setTimeout(() => {
-                        const currentRoom = games[code];
-                        // Verificar si sigue existiendo y si sigue desconectado
-                        if (currentRoom) {
-                           const p = currentRoom.players.find(pl => pl.name === player.name);
-                           if (p && !p.connected && !currentRoom.started) {
-                               currentRoom.players = currentRoom.players.filter(pl => pl.name !== player.name);
-                               io.to(code).emit("updatePlayerList", currentRoom.players);
-                           }
-                        }
-                    }, 5000);
+            } else {
+                // Si un jugador se va, SOLO lo marcamos desconectado. NO lo borramos.
+                // Así cuando vuelva, recupera su lugar.
+                const player = games[code].players.find(p => p.id === socket.id);
+                if (player) {
+                    player.connected = false;
+                    console.log(`Jugador desconectado (esperando): ${player.name}`);
                 }
-                
-                // Avisamos visualmente que alguien se fue (opcional, pero ayuda al Host)
-                // io.to(code).emit("playerDisconnected", player.name); 
             }
         }
     });

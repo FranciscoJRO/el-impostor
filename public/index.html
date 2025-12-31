@@ -2,11 +2,9 @@
 <html lang="es">
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006" crossorigin="anonymous"></script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Impostor</title>
-    
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -16,100 +14,62 @@
         .card { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(233, 69, 96, 0.2); width: 90%; max-width: 500px; margin-bottom: 20px; border: 1px solid #0f3460; }
         .hidden { display: none !important; }
         
-        /* BOTONES */
-        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4); }
+        button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; transition: transform 0.2s; }
         button:hover { background: #ff5e78; transform: scale(1.02); }
-        button:active { transform: scale(0.95); }
-
-        /* Botón secundario (Cancelar) */
-        .btn-secondary { background: #34495e; font-size: 0.9em; padding: 10px 20px; margin-top: 15px; box-shadow: none; border: 1px solid #555; }
-        .btn-secondary:hover { background: #46637f; }
-
-        /* INPUTS MEJORADOS */
-        input { 
-            background: rgba(255, 255, 255, 0.05); 
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 15px 25px;
-            width: 85%;
-            border-radius: 50px;
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            outline: none;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        input:focus {
-            border-color: #f1c40f;
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
-            transform: scale(1.02);
-        }
-        input::placeholder { color: rgba(255, 255, 255, 0.4); font-style: italic; }
-
-        /* TEXTOS */
-        .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
-        .help-text { font-size: 0.9em; color: #a2a8d3; margin-top: 5px; margin-bottom: 20px; line-height: 1.4; }
+        .btn-secondary { background: #34495e; font-size: 0.9em; padding: 10px 20px; margin-top: 15px; border: 1px solid #555; }
         
-        /* Host Specific */
+        input { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: white; padding: 15px 25px; width: 85%; border-radius: 50px; font-size: 1.2em; margin-bottom: 15px; text-align: center; }
+        input:focus { border-color: #f1c40f; background: rgba(255, 255, 255, 0.1); }
+        
+        .room-code { font-size: 4em; letter-spacing: 10px; color: #f1c40f; font-weight: bold; margin: 10px 0; text-transform: uppercase; }
+        .help-text { font-size: 0.9em; color: #a2a8d3; margin-top: 5px; margin-bottom: 20px; }
+        
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; margin: 5px; display:inline-block; font-weight: bold; animation: popIn 0.3s; }
-        
-        /* Roles */
         .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
         .impostor { background: #c0392b; }
         .citizen { background: #27ae60; }
         .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
         
-        /* Voting */
         .vote-btn { background: #34495e; margin: 5px; padding: 15px; width: 100%; font-size: 1.2em; color: white; border: 2px solid #2c3e50; border-radius: 10px; }
-        .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
+        .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; }
         .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
-
-        /* RULETA */
         .roulette-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
-        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 5px solid white; transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1); position: relative; overflow: hidden; background: #333;}
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #e94560; z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
-
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 5px solid white; overflow: hidden; background: #333;}
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #e94560; z-index: 10; }
         @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
     </style>
 </head>
 <body>
 
     <div id="modeSelect" class="card">
-        <h1 style="color:#f1c40f; margin-bottom: 5px;">EL IMPOSTOR</h1>
-        <p style="margin-top:0; color:#ccc;">¿En qué dispositivo estás?</p>
+        <h1 style="color:#f1c40f;">EL IMPOSTOR</h1>
+        <p style="color:#ccc;">¿En qué dispositivo estás?</p>
         <hr style="border-color:#333; margin: 20px 0;">
-
         <div style="margin-bottom: 30px;">
             <button onclick="initHost()">📺 SOY LA TV (CREAR)</button>
-            <p class="help-text">Elige esto en tu <strong>Computadora o Smart TV</strong>.<br>Aquí se verá el tablero principal.</p>
+            <p class="help-text">Computadora o Smart TV.</p>
         </div>
-
         <div>
             <button onclick="initPlayerManual()" style="background: #3498db;">📱 SOY JUGADOR (UNIRSE)</button>
-            <p class="help-text">Elige esto en tu <strong>Celular</strong>.<br>Aquí recibirás tu palabra secreta y votarás.</p>
+            <p class="help-text">Celular.</p>
         </div>
     </div>
 
     <div id="hostView" class="hidden">
-        <p style="margin-bottom:0; color:#aaa;">CÓDIGO DE SALA:</p>
+        <p style="color:#aaa;">CÓDIGO DE SALA:</p>
         <div id="displayRoomCode" class="room-code">...</div>
         <div id="qrCode"></div>
         <h3>Jugadores: <span id="count">0</span></h3>
         <div id="playerList"></div>
         <br>
-        
         <button onclick="startGame()" id="btnStart">COMENZAR JUEGO</button>
-
-        <div id="gameInstructions" style="margin-top: 40px; text-align: left; max-width: 700px; color: #ccc; font-size: 0.9em; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-left: auto; margin-right: auto;">
-            <h3 style="color: #f1c40f; border-bottom: 1px solid #555; padding-bottom: 10px; margin-top:0;">¿Cómo jugar?</h3>
-            <p><strong>1. Conexión:</strong> Escaneen el QR con su cámara o usen el código.</p>
-            <p><strong>2. Roles:</strong> Todos reciben una palabra secreta, menos el <strong>Impostor</strong>.</p>
-            <p><strong>3. Debate:</strong> Digan una palabra relacionada. ¡El Impostor debe fingir que sabe!</p>
-            <p><strong>4. Votación:</strong> Al terminar el tiempo, expulsen al sospechoso.</p>
-        </div>
         
+        <div id="gameInstructions" style="margin-top: 40px; text-align: left; max-width: 700px; color: #ccc; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin: auto;">
+            <h3 style="color: #f1c40f; margin-top:0;">¿Cómo jugar?</h3>
+            <p>1. Escaneen el QR. 2. Reciban su rol. 3. Debatan y expulsen al Impostor.</p>
+        </div>
+
         <div id="hostGameScreen" class="hidden" style="margin-top:30px; border-top: 1px solid #444; padding-top:20px;">
             <h2 style="color:#a2a8d3">Categoría: <span id="hostCategory" style="color:white"></span></h2>
             <div style="background:#0f3460; padding:20px; border-radius:15px; border: 1px solid #f1c40f;">
@@ -117,7 +77,6 @@
                 <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
-            
             <button onclick="triggerVoting()" style="background: #e67e22; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
             <br>
             <button onclick="resetGame()" class="btn-secondary">🔄 CANCELAR / REINICIAR</button>
@@ -128,16 +87,10 @@
             <div class="vote-count"><span id="votesIn">0</span> / <span id="totalPlayers">0</span></div>
             <div class="bar-container"><div id="progressBar" class="bar-fill"></div></div>
         </div>
-
         <div id="hostRouletteScreen" class="hidden">
             <h1 style="color:#e94560">¡EMPATE! 😱</h1>
-            <p>Girando la ruleta de la muerte...</p>
-            <div class="roulette-container">
-                <div class="pointer"></div>
-                <div class="wheel" id="wheel"></div>
-            </div>
+            <div class="roulette-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
         </div>
-
         <div id="hostResultScreen" class="hidden">
             <h1>RESULTADO</h1>
             <h2 style="margin:0">Expulsado:</h2>
@@ -149,13 +102,12 @@
 
     <div id="playerView" class="hidden" style="width: 100%;">
         <div id="loginScreen" class="card">
-            <h2 style="margin-bottom: 25px;">Unirse al Juego</h2>
-            <input type="text" id="roomInput" placeholder="CÓDIGO (4 LETRAS)" style="text-transform:uppercase; letter-spacing: 3px; font-weight: bold;">
+            <h2>Unirse</h2>
+            <input type="text" id="roomInput" placeholder="CÓDIGO (4 LETRAS)" style="text-transform:uppercase;">
             <input type="text" id="username" placeholder="Tu Nombre">
             <button onclick="joinGame()">ENTRAR 🚀</button>
-            <p id="errorMsg" style="color:#e74c3c; margin-top:10px; font-weight:bold;"></p>
+            <p id="errorMsg" style="color:#e74c3c;"></p>
         </div>
-
         <div id="waitingScreen" class="card hidden">
             <h2>¡Estás dentro!</h2>
             <p>Mira la TV...</p>
@@ -174,9 +126,7 @@
             <div id="voteButtonsContainer"></div>
         </div>
         <div id="playerWaitScreen" class="hidden">
-            <div class="card">
-                <h2>Voto enviado ✅</h2>
-            </div>
+            <div class="card"><h2>Voto enviado ✅</h2></div>
         </div>
     </div>
 
@@ -185,6 +135,19 @@
         let isHost = false;
         let myRoomCode = "";
         let currentTimer = null;
+        
+        // Variables para recordar sesión
+        let savedName = "";
+        let savedRoom = "";
+
+        // --- MAGIA: RECONEXIÓN AUTOMÁTICA ---
+        socket.on('connect', () => {
+            // Si ya habíamos metido datos, nos volvemos a unir solos
+            if (savedName && savedRoom && !isHost) {
+                console.log("Intentando reconectar...");
+                socket.emit('joinGame', { name: savedName, roomCode: savedRoom });
+            }
+        });
 
         // Detectar QR
         window.onload = function() {
@@ -195,8 +158,7 @@
                 document.getElementById('playerView').classList.remove('hidden');
                 document.getElementById('roomInput').value = roomParam;
                 document.getElementById('roomInput').disabled = true;
-                document.getElementById('roomInput').style.opacity = "0.7";
-                document.getElementById('roomInput').style.border = "2px solid #2ecc71";
+                savedRoom = roomParam; // Guardamos el room del QR
             }
         };
 
@@ -218,8 +180,15 @@
 
         socket.on('updatePlayerList', (players) => {
             if(!isHost) return;
-            document.getElementById('count').innerText = players.length;
-            document.getElementById('playerList').innerHTML = players.map(p => `<span class="player-badge">${p.name}</span>`).join('');
+            // Solo contamos los conectados para que el host sepa quién está vivo
+            const connectedPlayers = players.filter(p => p.connected);
+            document.getElementById('count').innerText = connectedPlayers.length;
+            
+            // Mostramos a todos, pero los desconectados un poco transparentes
+            document.getElementById('playerList').innerHTML = players.map(p => {
+                const opacity = p.connected ? '1' : '0.4';
+                return `<span class="player-badge" style="opacity:${opacity}">${p.name}</span>`;
+            }).join('');
         });
 
         function startGame() { socket.emit('startGameLogic'); }
@@ -234,21 +203,29 @@
             const name = document.getElementById('username').value;
             const code = document.getElementById('roomInput').value.toUpperCase();
             if(name && code.length === 4) {
+                savedName = name; // Guardar para reconexión
+                savedRoom = code; // Guardar para reconexión
                 socket.emit('joinGame', { name: name, roomCode: code });
             } else { 
                 const btn = document.querySelector('#loginScreen button');
-                btn.style.background = "#e74c3c";
-                btn.innerText = "¡FALTAN DATOS!";
+                btn.style.background = "#e74c3c"; btn.innerText = "¡FALTAN DATOS!";
                 setTimeout(() => { btn.style.background = "#e94560"; btn.innerText = "ENTRAR 🚀"; }, 1000);
             }
         }
 
-        socket.on('errorMsg', (msg) => {
-            document.getElementById('errorMsg').innerText = msg;
+        socket.on('errorMsg', (msg) => { document.getElementById('errorMsg').innerText = msg; });
+
+        // Forzar pantalla de espera (usado al reconectar)
+        socket.on('forceWaitScreen', () => {
+             document.getElementById('loginScreen').classList.add('hidden');
+             document.getElementById('waitingScreen').classList.remove('hidden');
+             document.getElementById('roleScreen').classList.add('hidden');
+             document.getElementById('playerVotingScreen').classList.add('hidden');
         });
 
         socket.on('updatePlayerList', (players) => {
             if(!isHost && !document.getElementById('loginScreen').classList.contains('hidden')) {
+                // Si estoy en login y recibo lista, es que entré
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
             }
@@ -291,7 +268,9 @@
             if(isHost) {
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('hostVotingScreen').classList.remove('hidden');
-                document.getElementById('totalPlayers').innerText = players.length;
+                // Contamos solo los conectados para la barra
+                const active = players.filter(p => p.connected).length;
+                document.getElementById('totalPlayers').innerText = active;
                 document.getElementById('votesIn').innerText = "0";
                 document.getElementById('progressBar').style.width = "0%";
                 speak("¡Tiempo! Es hora de votar.");
@@ -301,15 +280,18 @@
                 const box = document.getElementById('voteButtonsContainer');
                 box.innerHTML = "";
                 players.forEach(p => {
-                    let btn = document.createElement('button');
-                    btn.className = 'vote-btn';
-                    btn.innerText = p.name;
-                    btn.onclick = () => {
-                        socket.emit('castVote', p.name);
-                        document.getElementById('playerVotingScreen').classList.add('hidden');
-                        document.getElementById('playerWaitScreen').classList.remove('hidden');
-                    };
-                    box.appendChild(btn);
+                    // Solo mostramos botones de gente conectada
+                    if (p.connected) {
+                        let btn = document.createElement('button');
+                        btn.className = 'vote-btn';
+                        btn.innerText = p.name;
+                        btn.onclick = () => {
+                            socket.emit('castVote', p.name);
+                            document.getElementById('playerVotingScreen').classList.add('hidden');
+                            document.getElementById('playerWaitScreen').classList.remove('hidden');
+                        };
+                        box.appendChild(btn);
+                    }
                 });
             }
         });
@@ -358,11 +340,8 @@
             const count = players.length;
             const degPerSeg = 360 / count;
             const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
-
             let gradient = "conic-gradient(";
-            players.forEach((p, i) => {
-                gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `;
-            });
+            players.forEach((p, i) => { gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `; });
             gradient = gradient.slice(0, -2) + ")";
             wheel.style.background = gradient;
             
@@ -387,14 +366,12 @@
             const winnerIndex = players.indexOf(winner);
             const winnerCenterAngle = winnerIndex * degPerSeg + (degPerSeg / 2);
             const totalRotation = 1800 + (360 - winnerCenterAngle);
-            
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
             setTimeout(() => {
                 wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
                 wheel.style.transform = `rotate(${totalRotation}deg)`;
             }, 50);
-
             setTimeout(callback, 4500);
         }
 
@@ -403,21 +380,21 @@
 
         socket.on('resetClient', () => {
             if (currentTimer) clearInterval(currentTimer);
-            
             if(isHost) {
                 document.getElementById('hostResultScreen').classList.add('hidden');
                 document.getElementById('hostRouletteScreen').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.add('hidden');
+                document.getElementById('hostVotingScreen').classList.add('hidden');
                 document.getElementById('btnStart').classList.remove('hidden');
                 document.getElementById('gameInstructions').classList.remove('hidden');
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.add('hidden');
+                document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
             }
         });
 
-        // --- UTILIDADES ---
         function startTimer(duration) {
             if (currentTimer) clearInterval(currentTimer);
             const display = document.getElementById('timer');
