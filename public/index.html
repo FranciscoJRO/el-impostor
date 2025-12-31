@@ -26,7 +26,7 @@
         
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; margin: 5px; display:inline-block; font-weight: bold; animation: popIn 0.3s; }
-        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; }
+        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; transition: all 0.3s; }
         .impostor { background: #c0392b; }
         .citizen { background: #27ae60; }
         .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
@@ -113,14 +113,27 @@
             <p>Mira la TV...</p>
             <div style="font-size: 3em; animation: popIn 1s infinite alternate;">👀</div>
         </div>
+        
         <div id="roleScreen" class="card hidden">
             <h3 id="roleTitle">TU ROL:</h3>
+            
             <div id="roleCardBox" class="role-card">
-                <div id="secretWord" class="big-word">...</div>
-                <p id="roleDesc"></p>
+                <div id="roleCover" style="cursor:pointer;" onclick="toggleRole()">
+                    <div style="font-size: 3em;">🙈</div>
+                    <p style="font-weight:bold; margin-top:10px;">TOQUE PARA REVELAR</p>
+                </div>
+                
+                <div id="roleContent" class="hidden">
+                    <div id="secretWord" class="big-word">...</div>
+                    <p id="roleDesc"></p>
+                </div>
             </div>
-            <p style="color:#a2a8d3;">Categoría: <span id="playerCategory"></span></p>
+
+            <button onclick="toggleRole()" id="btnToggleRole" style="background:#34495e; font-size:0.9em; margin-top:15px; border:1px solid #555;">👁️ MOSTRAR ROL</button>
+            
+            <p style="color:#a2a8d3; margin-top:20px;">Categoría: <span id="playerCategory"></span></p>
         </div>
+
         <div id="playerVotingScreen" class="hidden">
             <h2>¿Quién es el Impostor?</h2>
             <div id="voteButtonsContainer"></div>
@@ -135,21 +148,16 @@
         let isHost = false;
         let myRoomCode = "";
         let currentTimer = null;
-        
-        // Variables para recordar sesión
         let savedName = "";
         let savedRoom = "";
 
-        // --- MAGIA: RECONEXIÓN AUTOMÁTICA ---
         socket.on('connect', () => {
-            // Si ya habíamos metido datos, nos volvemos a unir solos
             if (savedName && savedRoom && !isHost) {
                 console.log("Intentando reconectar...");
                 socket.emit('joinGame', { name: savedName, roomCode: savedRoom });
             }
         });
 
-        // Detectar QR
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
@@ -158,7 +166,7 @@
                 document.getElementById('playerView').classList.remove('hidden');
                 document.getElementById('roomInput').value = roomParam;
                 document.getElementById('roomInput').disabled = true;
-                savedRoom = roomParam; // Guardamos el room del QR
+                savedRoom = roomParam; 
             }
         };
 
@@ -180,11 +188,8 @@
 
         socket.on('updatePlayerList', (players) => {
             if(!isHost) return;
-            // Solo contamos los conectados para que el host sepa quién está vivo
             const connectedPlayers = players.filter(p => p.connected);
             document.getElementById('count').innerText = connectedPlayers.length;
-            
-            // Mostramos a todos, pero los desconectados un poco transparentes
             document.getElementById('playerList').innerHTML = players.map(p => {
                 const opacity = p.connected ? '1' : '0.4';
                 return `<span class="player-badge" style="opacity:${opacity}">${p.name}</span>`;
@@ -203,8 +208,8 @@
             const name = document.getElementById('username').value;
             const code = document.getElementById('roomInput').value.toUpperCase();
             if(name && code.length === 4) {
-                savedName = name; // Guardar para reconexión
-                savedRoom = code; // Guardar para reconexión
+                savedName = name; 
+                savedRoom = code; 
                 socket.emit('joinGame', { name: name, roomCode: code });
             } else { 
                 const btn = document.querySelector('#loginScreen button');
@@ -215,7 +220,6 @@
 
         socket.on('errorMsg', (msg) => { document.getElementById('errorMsg').innerText = msg; });
 
-        // Forzar pantalla de espera (usado al reconectar)
         socket.on('forceWaitScreen', () => {
              document.getElementById('loginScreen').classList.add('hidden');
              document.getElementById('waitingScreen').classList.remove('hidden');
@@ -225,7 +229,6 @@
 
         socket.on('updatePlayerList', (players) => {
             if(!isHost && !document.getElementById('loginScreen').classList.contains('hidden')) {
-                // Si estoy en login y recibo lista, es que entré
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
             }
@@ -244,12 +247,38 @@
             }
         });
 
+        // --- LÓGICA DE MOSTRAR/OCULTAR ROL ---
+        function toggleRole() {
+            const cover = document.getElementById('roleCover');
+            const content = document.getElementById('roleContent');
+            const btn = document.getElementById('btnToggleRole');
+            
+            if (cover.classList.contains('hidden')) {
+                // Ocultar
+                cover.classList.remove('hidden');
+                content.classList.add('hidden');
+                btn.innerText = "👁️ MOSTRAR ROL";
+            } else {
+                // Mostrar
+                cover.classList.add('hidden');
+                content.classList.remove('hidden');
+                btn.innerText = "🙈 OCULTAR ROL";
+            }
+        }
+
         socket.on('roleAssign', (data) => {
             document.getElementById('waitingScreen').classList.add('hidden');
             document.getElementById('playerWaitScreen').classList.add('hidden');
             document.getElementById('roleScreen').classList.remove('hidden');
+            
+            // RESETEAR ESTADO VISUAL: Siempre oculto al inicio
+            document.getElementById('roleCover').classList.remove('hidden');
+            document.getElementById('roleContent').classList.add('hidden');
+            document.getElementById('btnToggleRole').innerText = "👁️ MOSTRAR ROL";
+
             document.getElementById('playerCategory').innerText = data.category;
             const card = document.getElementById('roleCardBox');
+            
             if (data.role === 'Impostor') {
                 card.className = 'role-card impostor';
                 document.getElementById('secretWord').innerText = "IMPOSTOR";
@@ -268,7 +297,6 @@
             if(isHost) {
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('hostVotingScreen').classList.remove('hidden');
-                // Contamos solo los conectados para la barra
                 const active = players.filter(p => p.connected).length;
                 document.getElementById('totalPlayers').innerText = active;
                 document.getElementById('votesIn').innerText = "0";
@@ -280,7 +308,6 @@
                 const box = document.getElementById('voteButtonsContainer');
                 box.innerHTML = "";
                 players.forEach(p => {
-                    // Solo mostramos botones de gente conectada
                     if (p.connected) {
                         let btn = document.createElement('button');
                         btn.className = 'vote-btn';
@@ -320,6 +347,10 @@
             } else {
                 document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('roleScreen').classList.remove('hidden');
+                // Al volver, mantener oculto el rol
+                document.getElementById('roleCover').classList.remove('hidden');
+                document.getElementById('roleContent').classList.add('hidden');
+                
                 if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
                 else alert("Expulsado: " + res.expelled);
             }
@@ -375,7 +406,6 @@
             setTimeout(callback, 4500);
         }
 
-        // --- RESET ---
         function resetGame() { socket.emit('resetGame'); }
 
         socket.on('resetClient', () => {
