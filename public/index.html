@@ -21,6 +21,10 @@
         button:hover { background: #ff5e78; transform: scale(1.02); }
         button:active { transform: scale(0.95); }
 
+        /* Botón secundario (Cancelar) */
+        .btn-secondary { background: #34495e; font-size: 0.9em; padding: 10px 20px; margin-top: 15px; box-shadow: none; border: 1px solid #555; }
+        .btn-secondary:hover { background: #46637f; }
+
         /* INPUTS MEJORADOS */
         input { 
             background: rgba(255, 255, 255, 0.05); 
@@ -113,7 +117,10 @@
                 <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
+            
             <button onclick="triggerVoting()" style="background: #e67e22; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
+            <br>
+            <button onclick="resetGame()" class="btn-secondary">🔄 CANCELAR / REINICIAR</button>
         </div>
 
         <div id="hostVotingScreen" class="hidden">
@@ -251,7 +258,7 @@
         socket.on('gameStartedMain', (data) => {
             if(isHost) {
                 document.getElementById('btnStart').classList.add('hidden');
-                document.getElementById('gameInstructions').classList.add('hidden'); // Ocultar instrucciones
+                document.getElementById('gameInstructions').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.remove('hidden');
                 document.getElementById('hostCategory').innerText = data.category;
                 document.getElementById('hostStarter').innerText = data.start;
@@ -402,7 +409,7 @@
                 document.getElementById('hostRouletteScreen').classList.add('hidden');
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('btnStart').classList.remove('hidden');
-                document.getElementById('gameInstructions').classList.remove('hidden'); // Mostrar instrucciones
+                document.getElementById('gameInstructions').classList.remove('hidden');
             } else {
                 document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.add('hidden');
