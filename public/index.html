@@ -464,6 +464,7 @@
             if(isHost) {
                 document.getElementById('hostVotingScreen').classList.add('hidden');
                 document.getElementById('gameUI_frase').classList.add('hidden');
+                document.getElementById('fraseCandidatesBoard').innerHTML = ""; // Limpiar
                 if (res.isTie) {
                     document.getElementById('hostRouletteScreen').classList.remove('hidden');
                     speak("¡Empate! Ruleta.");
