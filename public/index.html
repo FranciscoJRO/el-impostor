@@ -4,7 +4,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Party</title>
+    <title>El Impostor & Friends</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -17,7 +17,7 @@
         button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; transition: transform 0.2s; }
         button:hover { background: #ff5e78; transform: scale(1.02); }
         .btn-secondary { background: #34495e; font-size: 0.9em; padding: 10px 20px; margin-top: 15px; border: 1px solid #555; }
-        .btn-menu { margin-bottom: 15px; padding: 20px; font-size: 1.3em; width: 100%; }
+        .btn-menu { margin-bottom: 15px; padding: 20px; font-size: 1.3em; }
         
         input { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: white; padding: 15px 25px; width: 85%; border-radius: 50px; font-size: 1.2em; margin-bottom: 15px; text-align: center; }
         input:focus { border-color: #f1c40f; background: rgba(255, 255, 255, 0.1); }
@@ -39,9 +39,6 @@
         .trivia-btn { height: 100px; font-size: 1.5em; border: 3px solid rgba(0,0,0,0.2); }
         .btn-0 { background: #e74c3c; } .btn-1 { background: #3498db; }
         .btn-2 { background: #f1c40f; } .btn-3 { background: #2ecc71; }
-        
-        /* ESTILOS FRASE */
-        .frase-card { background: #eee; color: #333; padding: 15px; border-radius: 10px; margin: 10px; font-weight: bold; font-size: 1.5em; width: 80%; margin-left: auto; margin-right: auto;}
 
         /* VOTACION & RULETA */
         .vote-btn { background: #34495e; margin: 5px; padding: 15px; width: 100%; font-size: 1.2em; color: white; border: 2px solid #2c3e50; border-radius: 10px; }
@@ -84,15 +81,6 @@
             <button onclick="selectGame('trivia')" class="btn-menu" style="background:#f1c40f">🧠 GUERRA CEREBROS</button>
         </div>
 
-        <div id="hostTriviaSetup" class="hidden">
-            <h2 style="color:#f1c40f">CONFIGURACIÓN TRIVIA</h2>
-            <p>¿Cuántas preguntas?</p>
-            <button onclick="startTriviaConfig(5)">5 Preguntas (Rápido)</button>
-            <button onclick="startTriviaConfig(10)">10 Preguntas (Medio)</button>
-            <button onclick="startTriviaConfig(15)">15 Preguntas (Largo)</button>
-            <button onclick="resetGame()" class="btn-secondary">VOLVER</button>
-        </div>
-
         <div id="gameUI_impostor" class="hidden" style="margin-top:30px;">
             <h2 style="color:#a2a8d3">Categoría: <span id="hostCategory" style="color:white"></span></h2>
             <div style="background:#0f3460; padding:20px; border-radius:15px; border: 1px solid #f1c40f;">
@@ -107,15 +95,12 @@
         <div id="gameUI_frase" class="hidden">
             <h1 style="color:#9b59b6">COMPLETA LA FRASE</h1>
             <div style="background:#2c3e50; padding:20px; font-size:1.5em; border-radius:10px; margin:20px 0;" id="fraseText">...</div>
-            
-            <h3 id="fraseStatus">Esperando respuestas... <span id="fraseCountDisplay">0</span></h3>
-            <div id="fraseCandidatesBoard" style="display:flex; flex-direction:column; justify-content:center;"></div>
-            
+            <button onclick="triggerVoting()" style="background: #e67e22">VOTAR RESPUESTAS</button>
             <button onclick="resetGame()" class="btn-secondary">🔄 SALIR</button>
         </div>
 
         <div id="gameUI_trivia" class="hidden">
-            <h1 style="color:#f1c40f">PREGUNTA <span id="qIndex"></span></h1>
+            <h1 style="color:#f1c40f">PREGUNTA</h1>
             <div style="font-size:2em; margin:20px;" id="qText">...</div>
             <div class="trivia-grid" style="font-size:1.2em;">
                 <div class="card btn-0" id="opt0">A</div>
@@ -123,13 +108,7 @@
                 <div class="card btn-2" id="opt2">C</div>
                 <div class="card btn-3" id="opt3">D</div>
             </div>
-            
-            <div id="triviaLeaderboard" class="hidden card" style="position:absolute; top:10%; left:5%; width:80%; z-index:100; border: 3px solid #f1c40f;">
-                <h2 style="color:#f1c40f">🏆 PUNTAJES 🏆</h2>
-                <div id="scoresList" style="font-size:1.5em; text-align:left; padding:20px;"></div>
-            </div>
-
-            <button onclick="resetGame()" class="btn-secondary" style="margin-top:20px;">🔄 SALIR</button>
+            <button onclick="resetGame()" class="btn-secondary">🔄 SALIR</button>
         </div>
 
         <div id="hostVotingScreen" class="hidden">
@@ -235,7 +214,6 @@
             document.getElementById('hostView').classList.remove('hidden');
         }
         function selectGame(type) { socket.emit('selectGame', type); }
-        function startTriviaConfig(n) { socket.emit('startTriviaConfig', n); document.getElementById('hostTriviaSetup').classList.add('hidden'); }
 
         socket.on('gameCreated', (code) => {
             myRoomCode = code;
@@ -253,17 +231,6 @@
                 const opacity = p.connected ? '1' : '0.4';
                 return `<span class="player-badge" style="opacity:${opacity}">${p.name}</span>`;
             }).join('');
-        });
-
-        socket.on('setupTriviaUI', () => {
-             document.getElementById('hostLobby').classList.add('hidden');
-             document.getElementById('hostTriviaSetup').classList.remove('hidden');
-        });
-        
-        socket.on('updateCount', (data) => {
-            if(isHost) {
-                document.getElementById('fraseCountDisplay').innerText = data.current + "/" + data.total;
-            }
         });
 
         // --- JUGADOR ---
@@ -303,8 +270,6 @@
         socket.on('startGameUI', (data) => {
             if(isHost) {
                 document.getElementById('hostLobby').classList.add('hidden');
-                document.getElementById('triviaLeaderboard').classList.add('hidden'); // Ocultar tabla anterior
-                
                 if(data.type === 'impostor') {
                     document.getElementById('hostGameScreen').classList.remove('hidden');
                     document.getElementById('hostCategory').innerText = data.category;
@@ -314,11 +279,9 @@
                 } else if (data.type === 'frase') {
                     document.getElementById('gameUI_frase').classList.remove('hidden');
                     document.getElementById('fraseText').innerText = data.prompt;
-                    document.getElementById('fraseCandidatesBoard').innerHTML = ""; // Limpiar
                     speak(data.prompt);
                 } else if (data.type === 'trivia') {
                     document.getElementById('gameUI_trivia').classList.remove('hidden');
-                    document.getElementById('qIndex').innerText = data.index;
                     document.getElementById('qText').innerText = data.question.q;
                     document.getElementById('opt0').innerText = data.question.ans[0];
                     document.getElementById('opt1').innerText = data.question.ans[1];
@@ -375,20 +338,9 @@
             }
         });
 
-        // --- TRIVIA RESULT & LEADERBOARD ---
+        // --- TRIVIA RESULT ---
         socket.on('triviaRoundEnd', (data) => {
-             if(isHost) {
-                 speak("Respuesta correcta: " + ['Roja','Azul','Amarilla','Verde'][data.correct]);
-                 
-                 // MOSTRAR LEADERBOARD
-                 const board = document.getElementById('triviaLeaderboard');
-                 const list = document.getElementById('scoresList');
-                 board.classList.remove('hidden');
-                 
-                 list.innerHTML = data.scores.map((p, i) => 
-                    `<div>#${i+1} ${p.name}: <strong>${p.score}</strong> pts</div>`
-                 ).join('');
-             }
+             if(isHost) speak("Respuesta correcta: " + ['Roja','Azul','Amarilla','Verde'][data.correct]);
         });
         socket.on('triviaGameOver', (scores) => {
             if(isHost) {
@@ -401,7 +353,6 @@
         function triggerVoting() { socket.emit('startVoting'); }
 
         socket.on('votingPhaseStarted', (list) => {
-            // "list" puede ser jugadores o respuestas de frase
             if(isHost) {
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('hostVotingScreen').classList.remove('hidden');
@@ -415,6 +366,7 @@
                 const box = document.getElementById('voteButtonsContainer');
                 box.innerHTML = "";
                 list.forEach(item => {
+                    // Si es frase, item es objeto respuesta {text, name}. Si es impostor, item es jugador.
                     const label = item.text ? item.text : item.name; 
                     const val = item.text ? item.text : item.name;
                     
@@ -431,20 +383,8 @@
             }
         });
         
-        // FRASE TV DISPLAY
         socket.on('fraseVotingPhase', (answers) => {
-             // 1. Mostrar las frases en la TV
-             if(isHost) {
-                 const board = document.getElementById('fraseCandidatesBoard');
-                 board.innerHTML = "";
-                 answers.forEach(ans => {
-                     const div = document.createElement('div');
-                     div.className = 'frase-card';
-                     div.innerText = ans.text;
-                     board.appendChild(div);
-                 });
-             }
-             // 2. Ejecutar lógica de votación normal
+             // Reutilizamos la pantalla de votación, pero enviamos respuestas
              socket.on('votingPhaseStarted')(answers);
         });
 
@@ -464,7 +404,6 @@
             if(isHost) {
                 document.getElementById('hostVotingScreen').classList.add('hidden');
                 document.getElementById('gameUI_frase').classList.add('hidden');
-                document.getElementById('fraseCandidatesBoard').innerHTML = ""; // Limpiar
                 if (res.isTie) {
                     document.getElementById('hostRouletteScreen').classList.remove('hidden');
                     speak("¡Empate! Ruleta.");
@@ -474,6 +413,7 @@
                 }
             } else {
                 document.getElementById('playerWaitScreen').classList.add('hidden');
+                // En impostor volvemos al rol, en otros a espera
                 document.getElementById('waitingScreen').classList.remove('hidden');
                 alert("Resultado: " + res.expelled);
             }
@@ -494,11 +434,10 @@
         socket.on('resetClient', () => {
             if (currentTimer) clearInterval(currentTimer);
             if(isHost) {
-                // Ocultar todo
-                const ids = ['hostResultScreen','hostRouletteScreen','hostGameScreen','hostVotingScreen','gameUI_frase','gameUI_trivia','hostTriviaSetup'];
+                // Ocultar todo juego
+                const ids = ['hostResultScreen','hostRouletteScreen','hostGameScreen','hostVotingScreen','gameUI_frase','gameUI_trivia'];
                 ids.forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('hostLobby').classList.remove('hidden');
-                document.getElementById('triviaLeaderboard').classList.add('hidden');
             } else {
                 hidePlayerScreens();
                 document.getElementById('waitingScreen').classList.remove('hidden');
