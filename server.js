@@ -327,6 +327,17 @@ function makeId(length) {
     return result;
 }
 
+// Mezclar array (Fisher-Yates)
+function shuffle(array) {
+  let currentIndex = array.length,  randomIndex;
+  while (currentIndex != 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
 io.on("connection", (socket) => {
     
     // CREAR SALA
@@ -363,14 +374,13 @@ io.on("connection", (socket) => {
             socket.username = cleanName;
             
             if (room.started) {
-                // Recuperar estado según el juego
                 if (room.gameType === 'impostor') {
                     if (existing.role === "Impostor") socket.emit("roleAssign", { role: "Impostor", category: room.gameData.cat, start: "..." });
                     else socket.emit("roleAssign", { role: "Ciudadano", category: room.gameData.cat, word: room.gameData.secret, start: "..." });
                 } else if (room.gameType === 'frase') {
                     socket.emit("startGameUI", { type: 'frase', prompt: room.gameData.prompt });
                 } else if (room.gameType === 'trivia') {
-                    socket.emit("startGameUI", { type: 'trivia', question: triviaQuestions[room.gameData.qIndex] });
+                    socket.emit("startGameUI", { type: 'trivia', question: room.gameData.questions[room.gameData.qIndex], index: room.gameData.qIndex + 1 });
                 }
             } else {
                 socket.emit("forceWaitScreen");
@@ -393,6 +403,41 @@ io.on("connection", (socket) => {
         const room = games[code];
         if (!room) return;
         
+        // Si es trivia, no empezamos, mandamos a setup
+        if (gameType === 'trivia') {
+            io.to(room.hostId).emit("setupTriviaUI");
+            return;
+        }
+
+        startSpecificGame(room, code, gameType);
+    });
+
+    // --- INICIAR TRIVIA CON CONFIGURACIÓN ---
+    socket.on("startTriviaConfig", (count) => {
+        const code = socket.roomCode;
+        const room = games[code];
+        if(!room) return;
+        
+        // Mezclar preguntas y cortar
+        const shuffled = shuffle([...allTriviaQuestions]);
+        const selectedQuestions = shuffled.slice(0, count);
+        
+        room.gameType = 'trivia';
+        room.started = true;
+        room.votes = {};
+        room.gameData = { 
+            questions: selectedQuestions, 
+            qIndex: 0, 
+            answers: {} 
+        };
+        
+        // Resetear puntajes
+        room.players.forEach(p => p.score = 0);
+
+        sendTriviaQuestion(room, code);
+    });
+
+    function startSpecificGame(room, code, gameType) {
         room.gameType = gameType;
         room.started = true;
         room.votes = {};
@@ -426,13 +471,7 @@ io.on("connection", (socket) => {
             room.gameData = { prompt: frase, answers: {} };
             io.to(code).emit("startGameUI", { type: 'frase', prompt: frase });
         }
-
-        // 3. GUERRA DE CEREBROS
-        if (gameType === 'trivia') {
-            room.gameData = { qIndex: 0, answers: {} };
-            sendTriviaQuestion(room, code);
-        }
-    });
+    }
 
     // --- LÓGICA FRASE ---
     socket.on("submitFrase", (text) => {
@@ -443,13 +482,14 @@ io.on("connection", (socket) => {
         
         const activeCount = room.players.filter(p => p.connected).length;
         if (Object.keys(room.gameData.answers).length >= activeCount) {
+            // ENVIAR RESPUESTAS AL HOST PARA QUE LAS MUESTRE
             io.to(code).emit("fraseVotingPhase", Object.values(room.gameData.answers));
         }
     });
 
     // --- LÓGICA TRIVIA ---
     function sendTriviaQuestion(room, code) {
-        const q = triviaQuestions[room.gameData.qIndex];
+        const q = room.gameData.questions[room.gameData.qIndex];
         room.gameData.answers = {}; 
         io.to(code).emit("startGameUI", { type: 'trivia', question: q, index: room.gameData.qIndex + 1 });
     }
@@ -459,21 +499,32 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
         
-        const currentQ = triviaQuestions[room.gameData.qIndex];
+        const currentQ = room.gameData.questions[room.gameData.qIndex];
         const isCorrect = (ansIdx === currentQ.correct);
         const player = room.players.find(p => p.id === socket.id);
-        if (isCorrect) player.score += 100;
+        
+        if (isCorrect) player.score += 100; // 100 puntos por acierto
         
         room.gameData.answers[socket.id] = true;
         
         const activeCount = room.players.filter(p => p.connected).length;
+        
+        // Si todos respondieron o si pasó tiempo (aquí simplificado a todos responden)
         if (Object.keys(room.gameData.answers).length >= activeCount) {
-            io.to(code).emit("triviaRoundEnd", { correct: currentQ.correct, scores: room.players });
+            // Mostrar Leaderboard
+            io.to(code).emit("triviaRoundEnd", { 
+                correct: currentQ.correct, 
+                scores: room.players.sort((a,b) => b.score - a.score) 
+            });
+
             setTimeout(() => {
                 room.gameData.qIndex++;
-                if (room.gameData.qIndex < triviaQuestions.length) sendTriviaQuestion(room, code);
-                else io.to(code).emit("triviaGameOver", room.players);
-            }, 5000);
+                if (room.gameData.qIndex < room.gameData.questions.length) {
+                    sendTriviaQuestion(room, code);
+                } else {
+                    io.to(code).emit("triviaGameOver", room.players);
+                }
+            }, 6000); // 6 segundos para ver puntajes
         }
     });
 
@@ -491,7 +542,7 @@ io.on("connection", (socket) => {
         const room = games[code];
         if(!room) return;
 
-        room.votes[socket.username] = voteData; // Usar nombre para evitar duplicados
+        room.votes[socket.username] = voteData;
         
         const activeCount = room.players.filter(p => p.connected).length;
         const votesCount = Object.keys(room.votes).length;
@@ -518,7 +569,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // REINICIAR (VUELVE AL MENÚ)
+    // REINICIAR
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
@@ -526,7 +577,7 @@ io.on("connection", (socket) => {
             room.started = false;
             room.votes = {};
             room.gameType = '';
-            io.to(code).emit("resetClient"); // Esto ahora mandará al menú
+            io.to(code).emit("resetClient");
             io.to(code).emit("updatePlayerList", room.players);
         }
     });
