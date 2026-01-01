@@ -193,218 +193,355 @@ const words = [
     { cat: "Transporte", word: "Uber" }, { cat: "Transporte", word: "Moto" }
 
 ];
+// --- 2. DATOS: FRASE MALDITA (MEGA PACK 50) ---
+const frases = [
+    // 1-10: Relaciones y Citas
+    "Lo peor que puedes decir en una primera cita es: ________.",
+    "Mi ex me dejó porque me obsesioné con ________.",
+    "El secreto para un matrimonio feliz es mucho ________.",
+    "Nunca te acuestes con alguien que tenga ________.",
+    "En mi perfil de Tinder puse que soy experto en ________.",
+    "El amor es ciego, pero mi suegra es ________.",
+    "Lo único que busco en una pareja es ________.",
+    "Mi técnica de ligue infalible consiste en usar ________.",
+    "Si mi vida amorosa fuera una película, se llamaría: '________'.",
+    "Lo más sexy que alguien me ha dicho en el oído fue: ________.",
+
+    // 11-20: Vida Laboral y Escolar
+    "La razón real por la que me corrieron de mi trabajo fue: ________.",
+    "En mi currículum mentí y dije que sabía hacer ________.",
+    "Mi jefe no sabe que paso 4 horas al día viendo ________.",
+    "Lo único que aprendí en la universidad fue a ________.",
+    "Si fuera maestro, reprobaría a los alumnos que ________.",
+    "En una entrevista de trabajo, nunca admitas que te gusta ________.",
+    "Mi excusa para no ir a trabajar mañana será: ________.",
+    "Lo peor de las juntas por Zoom es cuando se ve mi ________.",
+    "Mi superpoder en la oficina es ________.",
+    "Para ser millonario solo necesitas vender ________.",
+
+    // 21-30: Secretos y Absurdos
+    "Lo que realmente escondo bajo mi cama es: ________.",
+    "Mi placer culposo más grande es comer ________ mientras lloro.",
+    "No soy alcohólico, solo soy alérgico a ________.",
+    "Si fuera invisible por un día, lo primero que haría sería ________.",
+    "El título de mi película biográfica sería: '50 Sombras de ________'.",
+    "Batman no usa armas, él combate el crimen usando ________.",
+    "Para conquistar el mundo, solo necesito un ejército de ________.",
+    "Lo único más peligroso que un tiburón es ________.",
+    "En el futuro, usaremos ________ en lugar de dinero.",
+    "Si me gano la lotería, lo primero que compro es ________.",
+
+    // 31-40: Situaciones Incómodas
+    "Nunca entres a un baño público sin llevar ________.",
+    "En mi lápida quiero que escriban: 'Aquí yace alguien que amaba ________'.",
+    "Lo más vergonzoso que he hecho borracho es ________.",
+    "En el funeral, todos se quedaron callados cuando se cayó ________.",
+    "El doctor me dijo que dejara de comer ________.",
+    "Mi mamá siempre me regañaba por jugar con ________.",
+    "Lo peor que te puede pasar en Año Nuevo es ________.",
+    "Mi propósito de Año Nuevo es dejar de ________.",
+    "Dios creó al hombre, pero el diablo creó a ________.",
+    "Lo único que le falta a esta fiesta para ser perfecta es: ________.",
+
+    // 41-50: Random
+    "¿Por qué cruzó la gallina la calle? Para conseguir ________.",
+    "El ingrediente secreto de la abuela en realidad era ________.",
+    "Harry Potter y la cámara de ________.",
+    "Lo único que salvaría de un incendio es mi colección de ________.",
+    "Antes de morir, quiero probar ________.",
+    "Mi religión me prohíbe ________.",
+    "Si fuera un animal, sería un ________ con problemas de ira.",
+    "No eres tú, es mi ________.",
+    "Lo que nadie sabe de mí es que tengo un tercer ________.",
+    "La contraseña de mi celular es ________."
+];
+
+// --- 3. DATOS: GUERRA DE CEREBROS (MEGA PACK 50) ---
+const triviaQuestions = [
+    // --- GEOGRAFÍA (1-8) ---
+    { q: "¿Cuál es el planeta más grande?", ans: ["Júpiter", "Tierra", "Marte", "Sol"], correct: 0 }, 
+    { q: "¿Capital de Francia?", ans: ["Madrid", "París", "Londres", "Roma"], correct: 1 },
+    { q: "¿Cuál es el río más largo del mundo?", ans: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], correct: 1 },
+    { q: "¿Qué país tiene forma de bota?", ans: ["España", "Grecia", "Italia", "Portugal"], correct: 2 },
+    { q: "¿Dónde está la Torre Eiffel?", ans: ["Italia", "España", "Francia", "Inglaterra"], correct: 2 },
+    { q: "¿Capital de Australia?", ans: ["Sídney", "Melbourne", "Canberra", "Perth"], correct: 2 },
+    { q: "¿País más grande del mundo?", ans: ["China", "USA", "Rusia", "Canadá"], correct: 2 },
+    { q: "¿En qué continente está Egipto?", ans: ["Asia", "Europa", "África", "América"], correct: 2 },
+
+    // --- CIENCIA Y NATURALEZA (9-16) ---
+    { q: "¿Cuántos huesos tiene un adulto?", ans: ["206", "300", "150", "250"], correct: 0 },
+    { q: "¿Símbolo químico del oro?", ans: ["Ag", "Go", "Fe", "Au"], correct: 3 },
+    { q: "¿Animal más rápido del mundo?", ans: ["León", "Águila", "Guepardo", "Halcón"], correct: 3 }, // Halcón peregrino
+    { q: "¿Gas principal del aire?", ans: ["Oxígeno", "Nitrógeno", "CO2", "Helio"], correct: 1 },
+    { q: "¿Cuántas patas tiene una araña?", ans: ["6", "8", "10", "12"], correct: 1 },
+    { q: "¿Qué comen los pandas?", ans: ["Carne", "Bambú", "Pescado", "Insectos"], correct: 1 },
+    { q: "¿El sol es...?", ans: ["Un Planeta", "Una Estrella", "Un Asteroide", "Un Satélite"], correct: 1 },
+    { q: "¿Qué órgano bombea sangre?", ans: ["Cerebro", "Pulmón", "Hígado", "Corazón"], correct: 3 },
+
+    // --- CINE Y TV (17-24) ---
+    { q: "¿Quién vive en una piña?", ans: ["Patricio", "Calamardo", "Bob Esponja", "Arenita"], correct: 2 },
+    { q: "¿Villano de Harry Potter?", ans: ["Voldemort", "Sauron", "Joker", "Thanos"], correct: 0 },
+    { q: "¿Quién es Tony Stark?", ans: ["Capitán América", "Iron Man", "Batman", "Hulk"], correct: 1 },
+    { q: "¿Color del sable de Luke Skywalker?", ans: ["Rojo", "Morado", "Verde/Azul", "Naranja"], correct: 2 }, // Aceptando azul/verde
+    { q: "¿Película con más Oscars?", ans: ["Titanic", "Avatar", "Star Wars", "Matrix"], correct: 0 },
+    { q: "¿Nombre del ogro verde?", ans: ["Fiona", "Burro", "Shrek", "Farquaad"], correct: 2 },
+    { q: "¿De qué país es el Chavo del 8?", ans: ["Colombia", "México", "Argentina", "España"], correct: 1 },
+    { q: "¿Quién es el padre de Simba?", ans: ["Scar", "Timón", "Mufasa", "Nala"], correct: 2 },
+
+    // --- HISTORIA Y ARTE (25-32) ---
+    { q: "¿Quién pintó la Mona Lisa?", ans: ["Van Gogh", "Picasso", "Da Vinci", "Dalí"], correct: 2 },
+    { q: "¿Quién descubrió América?", ans: ["Colón", "Magallanes", "Vespucio", "Cortés"], correct: 0 },
+    { q: "¿Año de llegada a la Luna?", ans: ["1959", "1969", "1975", "1980"], correct: 1 },
+    { q: "¿Dónde están las pirámides famosas?", ans: ["México", "Perú", "Egipto", "China"], correct: 2 },
+    { q: "¿Moneda de la Unión Europea?", ans: ["Dólar", "Libra", "Euro", "Franco"], correct: 2 },
+    { q: "¿Quién fue Frida Kahlo?", ans: ["Cantante", "Escritora", "Pintora", "Actriz"], correct: 2 },
+    { q: "¿Guerra de 1939 a 1945?", ans: ["1ra Guerra", "2da Guerra", "Vietnam", "Fría"], correct: 1 },
+    { q: "¿Libro sagrado del Islam?", ans: ["Biblia", "Torá", "Corán", "Vedas"], correct: 2 },
+
+    // --- DEPORTES (33-40) ---
+    { q: "¿Duración partido de fútbol?", ans: ["45 min", "60 min", "90 min", "100 min"], correct: 2 },
+    { q: "¿Rey de los deportes?", ans: ["Fútbol", "Béisbol", "Tenis", "Basket"], correct: 1 },
+    { q: "¿Cuántos anillos olímpicos hay?", ans: ["4", "5", "6", "7"], correct: 1 },
+    { q: "¿País origen del Karate?", ans: ["China", "Corea", "Japón", "Tailandia"], correct: 2 },
+    { q: "¿Mejor basquetbolista (23)?", ans: ["LeBron", "Kobe", "Shaq", "Jordan"], correct: 3 },
+    { q: "¿Mundial de fútbol cada cuánto?", ans: ["2 años", "3 años", "4 años", "5 años"], correct: 2 },
+    { q: "¿En qué deporte se usa 'Touchdown'?", ans: ["Fútbol A.", "Rugby", "Golf", "Tenis"], correct: 0 },
+    { q: "¿Quién ganó el mundial 2022?", ans: ["Francia", "Brasil", "Argentina", "Alemania"], correct: 2 },
+
+    // --- TECNOLOGÍA Y CULTURA (41-50) ---
+    { q: "¿Quién fundó Microsoft?", ans: ["Steve Jobs", "Bill Gates", "Musk", "Zuckerberg"], correct: 1 },
+    { q: "¿Red social del pajarito?", ans: ["Facebook", "Instagram", "Twitter/X", "TikTok"], correct: 2 },
+    { q: "¿Buscador más usado?", ans: ["Bing", "Yahoo", "Google", "DuckDuckGo"], correct: 2 },
+    { q: "¿Compañía de la manzana?", ans: ["Samsung", "Apple", "LG", "Sony"], correct: 1 },
+    { q: "¿Qué significa 'WWW'?", ans: ["World War Web", "World Wide Web", "Web Wide World", "Nada"], correct: 1 },
+    { q: "¿Personaje de videojuegos fontanero?", ans: ["Sonic", "Link", "Mario", "Pacman"], correct: 2 },
+    { q: "¿Plataforma de videos más famosa?", ans: ["Vimeo", "YouTube", "Twitch", "Netflix"], correct: 1 },
+    { q: "¿Qué es un PDF?", ans: ["Imagen", "Video", "Documento", "Audio"], correct: 2 },
+    { q: "¿Marca de autos eléctricos de Musk?", ans: ["Ford", "Toyota", "Tesla", "BMW"], correct: 2 },
+    { q: "¿Qué inventó Graham Bell?", ans: ["Luz", "Teléfono", "Radio", "Avión"], correct: 1 }
+];
 function makeId(length) {
     let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    for ( let i = 0; i < length; i++ ) {
-       result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for ( let i = 0; i < length; i++ ) result += chars.charAt(Math.floor(Math.random() * chars.length));
     return result;
 }
 
 io.on("connection", (socket) => {
     
-    // 1. CREAR SALA
+    // CREAR SALA
     socket.on("createGame", () => {
         const roomCode = makeId(4);
         games[roomCode] = { 
-            players: [], 
-            started: false, 
-            votes: {}, 
-            secret: '', 
-            hostId: socket.id,
-            category: ''
+            players: [], started: false, votes: {}, 
+            hostId: socket.id, 
+            gameType: '', 
+            gameData: {}  
         };
         socket.join(roomCode);
         socket.roomCode = roomCode;
         socket.emit("gameCreated", roomCode);
     });
 
-    // 2. UNIRSE O RECONECTARSE (CORREGIDO)
+    // UNIRSE (CON RECONEXIÓN)
     socket.on("joinGame", ({ name, roomCode }) => {
         if (!name || !roomCode) return;
-        
-        // Limpiamos el nombre (quitamos espacios extra)
         const cleanName = name.trim();
         const cleanCode = roomCode.toUpperCase().trim();
-        
         const room = games[cleanCode];
 
-        if (!room) {
-            socket.emit("errorMsg", "Sala no encontrada.");
-            return;
-        }
+        if (!room) { socket.emit("errorMsg", "Sala no encontrada."); return; }
 
-        // ¿Ya existe este jugador? (Buscamos por nombre)
-        const existingPlayer = room.players.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
-
-        if (existingPlayer) {
-            // ¡ES UNA RECONEXIÓN!
-            console.log(`Jugador reconectado: ${cleanName}`);
-            existingPlayer.id = socket.id; // Actualizamos su ID de socket
-            existingPlayer.connected = true;
-            
+        const existing = room.players.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
+        
+        if (existing) {
+            // RECONEXIÓN
+            existing.id = socket.id;
+            existing.connected = true;
             socket.join(cleanCode);
             socket.roomCode = cleanCode;
             socket.username = cleanName;
-
-            // Si el juego ya corría, le devolvemos su rol inmediatamente
+            
             if (room.started) {
-                if (existingPlayer.role === "Impostor") {
-                    socket.emit("roleAssign", { role: "Impostor", category: room.category, start: "..." });
-                } else {
-                    socket.emit("roleAssign", { role: "Ciudadano", category: room.category, word: room.secret, start: "..." });
+                // Recuperar estado según el juego
+                if (room.gameType === 'impostor') {
+                    if (existing.role === "Impostor") socket.emit("roleAssign", { role: "Impostor", category: room.gameData.cat, start: "..." });
+                    else socket.emit("roleAssign", { role: "Ciudadano", category: room.gameData.cat, word: room.gameData.secret, start: "..." });
+                } else if (room.gameType === 'frase') {
+                    socket.emit("startGameUI", { type: 'frase', prompt: room.gameData.prompt });
+                } else if (room.gameType === 'trivia') {
+                    socket.emit("startGameUI", { type: 'trivia', question: triviaQuestions[room.gameData.qIndex] });
                 }
             } else {
-                // Si estamos en lobby, solo avisamos que está dentro
-                socket.emit("updatePlayerList", room.players);
-                // Forzamos al cliente a ir a la pantalla de espera
                 socket.emit("forceWaitScreen");
             }
         } else {
-            // ¡ES NUEVO!
-            if (room.started) {
-                socket.emit("errorMsg", "La partida ya empezó.");
-                return;
-            }
-
-            const player = { 
-                id: socket.id, 
-                name: cleanName, 
-                role: "citizen", 
-                connected: true 
-            };
+            // NUEVO JUGADOR
+            if (room.started) { socket.emit("errorMsg", "Partida iniciada."); return; }
+            const player = { id: socket.id, name: cleanName, score: 0, connected: true };
             room.players.push(player);
-            
             socket.join(cleanCode);
             socket.roomCode = cleanCode;
             socket.username = cleanName;
         }
-
-        // Actualizamos la lista para todos (esto evita duplicados visuales)
         io.to(cleanCode).emit("updatePlayerList", room.players);
     });
 
-    // 3. INICIAR JUEGO
-    socket.on("startGameLogic", () => {
+    // --- SELECCIONAR JUEGO ---
+    socket.on("selectGame", (gameType) => {
         const code = socket.roomCode;
         const room = games[code];
-        if(!room) return;
-        if (room.players.length < 1) return; 
-
-        room.started = true;
+        if (!room) return;
         
-        const selected = words[Math.floor(Math.random() * words.length)];
-        room.secret = selected.word;
-        room.category = selected.cat;
+        room.gameType = gameType;
+        room.started = true;
+        room.votes = {};
+        const active = room.players.filter(p => p.connected);
 
-        // Solo asignamos roles a los conectados, pero no borramos a los desconectados
-        const activePlayers = room.players.filter(p => p.connected);
-        const imposterIndex = Math.floor(Math.random() * activePlayers.length);
-        const startingPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)].name;
+        // 1. IMPOSTOR
+        if (gameType === 'impostor') {
+            if(active.length < 1) return;
+            const selected = impostorWords[Math.floor(Math.random() * impostorWords.length)];
+            room.gameData = { secret: selected.word, cat: selected.cat };
+            
+            const imposterIndex = Math.floor(Math.random() * active.length);
+            const starter = active[Math.floor(Math.random() * active.length)].name;
 
-        activePlayers.forEach((p, index) => {
-            const originalPlayer = room.players.find(pl => pl.name === p.name);
-            if (index === imposterIndex) {
-                originalPlayer.role = "Impostor";
-                io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: startingPlayer });
-            } else {
-                originalPlayer.role = "Ciudadano";
-                io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: startingPlayer });
-            }
-        });
+            active.forEach((p, i) => {
+                const original = room.players.find(pl => pl.name === p.name);
+                if (i === imposterIndex) {
+                    original.role = "Impostor";
+                    io.to(p.id).emit("roleAssign", { role: "Impostor", category: selected.cat, start: starter });
+                } else {
+                    original.role = "Ciudadano";
+                    io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: starter });
+                }
+            });
+            io.to(code).emit("startGameUI", { type: 'impostor', category: selected.cat, start: starter });
+        }
 
-        io.to(code).emit("gameStartedMain", { category: selected.cat, start: startingPlayer });
-    });
+        // 2. FRASE MALDITA
+        if (gameType === 'frase') {
+            const frase = frases[Math.floor(Math.random() * frases.length)];
+            room.gameData = { prompt: frase, answers: {} };
+            io.to(code).emit("startGameUI", { type: 'frase', prompt: frase });
+        }
 
-    // 4. VOTACIONES
-    socket.on("startVoting", () => {
-        const code = socket.roomCode;
-        if(games[code]) {
-            games[code].votes = {};
-            io.to(code).emit("votingPhaseStarted", games[code].players);
+        // 3. GUERRA DE CEREBROS
+        if (gameType === 'trivia') {
+            room.gameData = { qIndex: 0, answers: {} };
+            sendTriviaQuestion(room, code);
         }
     });
 
-    socket.on("castVote", (voteForName) => {
+    // --- LÓGICA FRASE ---
+    socket.on("submitFrase", (text) => {
+        const code = socket.roomCode;
+        const room = games[code];
+        if(!room) return;
+        room.gameData.answers[socket.id] = { name: socket.username, text: text };
+        
+        const activeCount = room.players.filter(p => p.connected).length;
+        if (Object.keys(room.gameData.answers).length >= activeCount) {
+            io.to(code).emit("fraseVotingPhase", Object.values(room.gameData.answers));
+        }
+    });
+
+    // --- LÓGICA TRIVIA ---
+    function sendTriviaQuestion(room, code) {
+        const q = triviaQuestions[room.gameData.qIndex];
+        room.gameData.answers = {}; 
+        io.to(code).emit("startGameUI", { type: 'trivia', question: q, index: room.gameData.qIndex + 1 });
+    }
+
+    socket.on("submitTrivia", (ansIdx) => {
+        const code = socket.roomCode;
+        const room = games[code];
+        if(!room) return;
+        
+        const currentQ = triviaQuestions[room.gameData.qIndex];
+        const isCorrect = (ansIdx === currentQ.correct);
+        const player = room.players.find(p => p.id === socket.id);
+        if (isCorrect) player.score += 100;
+        
+        room.gameData.answers[socket.id] = true;
+        
+        const activeCount = room.players.filter(p => p.connected).length;
+        if (Object.keys(room.gameData.answers).length >= activeCount) {
+            io.to(code).emit("triviaRoundEnd", { correct: currentQ.correct, scores: room.players });
+            setTimeout(() => {
+                room.gameData.qIndex++;
+                if (room.gameData.qIndex < triviaQuestions.length) sendTriviaQuestion(room, code);
+                else io.to(code).emit("triviaGameOver", room.players);
+            }, 5000);
+        }
+    });
+
+    // --- VOTACIÓN GENERAL ---
+    socket.on("startVoting", () => {
+        const code = socket.roomCode;
+        if(games[code]) {
+             games[code].votes = {};
+             io.to(code).emit("votingPhaseStarted", games[code].players);
+        }
+    });
+
+    socket.on("castVote", (voteData) => {
         const code = socket.roomCode;
         const room = games[code];
         if(!room) return;
 
-        const player = room.players.find(p => p.id === socket.id);
-        if(!player) return;
-
-        // Usamos el nombre como clave para evitar duplicados si reconectan
-        room.votes[player.name] = voteForName;
-
+        room.votes[socket.username] = voteData; // Usar nombre para evitar duplicados
+        
         const activeCount = room.players.filter(p => p.connected).length;
         const votesCount = Object.keys(room.votes).length;
         
         io.to(room.hostId).emit("updateVoteCount", { current: votesCount, total: activeCount });
 
-        if (votesCount >= activeCount && activeCount > 0) {
-            calculateResults(room, code);
+        if (votesCount >= activeCount) {
+            let counts = {};
+            let maxVotes = 0;
+            Object.values(room.votes).forEach(v => {
+                counts[v] = (counts[v] || 0) + 1;
+                if (counts[v] > maxVotes) maxVotes = counts[v];
+            });
+            
+            let winners = Object.keys(counts).filter(k => counts[k] === maxVotes);
+            let winner = winners[Math.floor(Math.random() * winners.length)]; 
+            let isTie = winners.length > 1;
+
+            if (room.gameType === 'impostor') {
+                io.to(code).emit("votingCompleted", { expelled: winner, secret: room.gameData.secret, isTie: isTie, tiedPlayers: winners });
+            } else if (room.gameType === 'frase') {
+                io.to(code).emit("fraseWinner", { text: winner });
+            }
         }
     });
 
-    function calculateResults(room, code) {
-        let counts = {};
-        let maxVotes = 0;
-        Object.values(room.votes).forEach(name => {
-            counts[name] = (counts[name] || 0) + 1;
-            if (counts[name] > maxVotes) maxVotes = counts[name];
-        });
-
-        let candidates = Object.keys(counts).filter(name => counts[name] === maxVotes);
-        let expelled = "";
-        let isTie = false;
-
-        if (candidates.length > 1) {
-            isTie = true;
-            expelled = candidates[Math.floor(Math.random() * candidates.length)];
-        } else {
-            expelled = candidates[0];
-        }
-        
-        io.to(code).emit("votingCompleted", { expelled: expelled, secret: room.secret, isTie: isTie, tiedPlayers: candidates });
-    }
-
-    // 5. REINICIAR (SOLUCIÓN AL PROBLEMA DE REFRESCO)
+    // REINICIAR (VUELVE AL MENÚ)
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
         if(room) {
             room.started = false;
             room.votes = {};
-            room.players.forEach(p => p.role = "citizen");
-            
-            // Mandamos dos señales: Resetear pantalla y Actualizar lista de espera
-            io.to(code).emit("resetClient");
+            room.gameType = '';
+            io.to(code).emit("resetClient"); // Esto ahora mandará al menú
             io.to(code).emit("updatePlayerList", room.players);
         }
     });
 
-    // 6. DESCONEXIÓN (YA NO BORRAMOS JUGADORES)
     socket.on("disconnect", () => {
         const code = socket.roomCode;
         if(code && games[code]) {
-            if(games[code].hostId === socket.id) {
-                // Si el host se va, ahí sí borramos la sala
-                delete games[code];
-            } else {
-                // Si un jugador se va, SOLO lo marcamos desconectado. NO lo borramos.
-                // Así cuando vuelva, recupera su lugar.
-                const player = games[code].players.find(p => p.id === socket.id);
-                if (player) {
-                    player.connected = false;
-                    console.log(`Jugador desconectado (esperando): ${player.name}`);
-                }
+            if(games[code].hostId === socket.id) delete games[code];
+            else {
+                const p = games[code].players.find(pl => pl.id === socket.id);
+                if(p) p.connected = false;
             }
         }
     });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-  console.log(`Servidor listo en el puerto ${PORT}`);
-});
+http.listen(PORT, () => { console.log(`Server en ${PORT}`); });
