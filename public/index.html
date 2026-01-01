@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5652456417162006" crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Impostor & Friends</title>
+    <title>El Impostor</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -17,7 +16,6 @@
         button { background: #e94560; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; transition: transform 0.2s; }
         button:hover { background: #ff5e78; transform: scale(1.02); }
         .btn-secondary { background: #34495e; font-size: 0.9em; padding: 10px 20px; margin-top: 15px; border: 1px solid #555; }
-        .btn-menu { margin-bottom: 15px; padding: 20px; font-size: 1.3em; }
         
         input { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: white; padding: 15px 25px; width: 85%; border-radius: 50px; font-size: 1.2em; margin-bottom: 15px; text-align: center; }
         input:focus { border-color: #f1c40f; background: rgba(255, 255, 255, 0.1); }
@@ -28,19 +26,22 @@
         #qrCode { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 20px 0; }
         .player-badge { background: #3498db; padding: 10px 20px; border-radius: 20px; margin: 5px; display:inline-block; font-weight: bold; animation: popIn 0.3s; }
         
-        /* ESTILOS IMPOSTOR */
-        .role-card { padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid white; transition: all 0.3s; background: #2c3e50; }
+        /* --- ESTILOS DE TARJETA MEJORADOS --- */
+        .role-card { 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-top: 20px; 
+            border: 2px solid white; 
+            transition: all 0.3s;
+            background: #2c3e50; /* Color Neutro por defecto */
+        }
+        
+        /* Solo se colorean si tienen la clase .revealed */
         .role-card.revealed.impostor { background: #c0392b; }
         .role-card.revealed.citizen { background: #27ae60; }
+        
         .big-word { font-size: 3em; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
         
-        /* ESTILOS TRIVIA */
-        .trivia-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .trivia-btn { height: 100px; font-size: 1.5em; border: 3px solid rgba(0,0,0,0.2); }
-        .btn-0 { background: #e74c3c; } .btn-1 { background: #3498db; }
-        .btn-2 { background: #f1c40f; } .btn-3 { background: #2ecc71; }
-
-        /* VOTACION & RULETA */
         .vote-btn { background: #34495e; margin: 5px; padding: 15px; width: 100%; font-size: 1.2em; color: white; border: 2px solid #2c3e50; border-radius: 10px; }
         .bar-container { width: 80%; background: #333; height: 30px; border-radius: 15px; margin: 20px auto; }
         .bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s; }
@@ -67,48 +68,29 @@
     </div>
 
     <div id="hostView" class="hidden">
-        <div id="hostLobby">
-            <p style="color:#aaa;">CÓDIGO DE SALA:</p>
-            <div id="displayRoomCode" class="room-code">...</div>
-            <div id="qrCode"></div>
-            <h3>Jugadores: <span id="count">0</span></h3>
-            <div id="playerList"></div>
-            <br>
-            <hr style="border-color:#333; margin:20px 0;">
-            <h3 style="color:#f1c40f">ELIGE QUÉ JUGAR:</h3>
-            <button onclick="selectGame('impostor')" class="btn-menu" style="background:#e74c3c">🕵️ EL IMPOSTOR</button>
-            <button onclick="selectGame('frase')" class="btn-menu" style="background:#9b59b6">🤣 FRASE MALDITA</button>
-            <button onclick="selectGame('trivia')" class="btn-menu" style="background:#f1c40f">🧠 GUERRA CEREBROS</button>
+        <p style="color:#aaa;">CÓDIGO DE SALA:</p>
+        <div id="displayRoomCode" class="room-code">...</div>
+        <div id="qrCode"></div>
+        <h3>Jugadores: <span id="count">0</span></h3>
+        <div id="playerList"></div>
+        <br>
+        <button onclick="startGame()" id="btnStart">COMENZAR JUEGO</button>
+        
+        <div id="gameInstructions" style="margin-top: 40px; text-align: left; max-width: 700px; color: #ccc; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin: auto;">
+            <h3 style="color: #f1c40f; margin-top:0;">¿Cómo jugar?</h3>
+            <p>1. Escaneen el QR. 2. Reciban su rol. 3. Debatan y expulsen al Impostor.</p>
         </div>
 
-        <div id="gameUI_impostor" class="hidden" style="margin-top:30px;">
+        <div id="hostGameScreen" class="hidden" style="margin-top:30px; border-top: 1px solid #444; padding-top:20px;">
             <h2 style="color:#a2a8d3">Categoría: <span id="hostCategory" style="color:white"></span></h2>
             <div style="background:#0f3460; padding:20px; border-radius:15px; border: 1px solid #f1c40f;">
-                Empieza:<br><strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
+                Empieza preguntando:<br>
+                <strong id="hostStarter" style="color:#f1c40f; font-size:2em;">...</strong>
             </div>
             <div id="timer" style="font-size: 5em; font-weight: bold; color:#e94560; margin-top:20px;">05:00</div>
             <button onclick="triggerVoting()" style="background: #e67e22; margin-top:20px;">🗳️ INICIAR VOTACIÓN</button>
             <br>
             <button onclick="resetGame()" class="btn-secondary">🔄 CANCELAR / REINICIAR</button>
-        </div>
-
-        <div id="gameUI_frase" class="hidden">
-            <h1 style="color:#9b59b6">COMPLETA LA FRASE</h1>
-            <div style="background:#2c3e50; padding:20px; font-size:1.5em; border-radius:10px; margin:20px 0;" id="fraseText">...</div>
-            <button onclick="triggerVoting()" style="background: #e67e22">VOTAR RESPUESTAS</button>
-            <button onclick="resetGame()" class="btn-secondary">🔄 SALIR</button>
-        </div>
-
-        <div id="gameUI_trivia" class="hidden">
-            <h1 style="color:#f1c40f">PREGUNTA</h1>
-            <div style="font-size:2em; margin:20px;" id="qText">...</div>
-            <div class="trivia-grid" style="font-size:1.2em;">
-                <div class="card btn-0" id="opt0">A</div>
-                <div class="card btn-1" id="opt1">B</div>
-                <div class="card btn-2" id="opt2">C</div>
-                <div class="card btn-3" id="opt3">D</div>
-            </div>
-            <button onclick="resetGame()" class="btn-secondary">🔄 SALIR</button>
         </div>
 
         <div id="hostVotingScreen" class="hidden">
@@ -121,10 +103,11 @@
             <div class="roulette-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
         </div>
         <div id="hostResultScreen" class="hidden">
-            <h1 id="resTitle">RESULTADO</h1>
+            <h1>RESULTADO</h1>
+            <h2 style="margin:0">Expulsado:</h2>
             <div id="expelledName" style="font-size: 3em; font-weight:bold; color:#e94560">...</div>
-            <h3 id="revealWord" style="color:#f1c40f">...</h3>
-            <button onclick="resetGame()" style="background:#3498db;">VOLVER AL MENÚ 🔄</button>
+            <h3 style="color:#f1c40f">La palabra era: <span id="revealWord" style="color:white">...</span></h3>
+            <button onclick="resetGame()" style="background:#3498db;">JUGAR OTRA VEZ 🔄</button>
         </div>
     </div>
 
@@ -144,39 +127,26 @@
         
         <div id="roleScreen" class="card hidden">
             <h3 id="roleTitle">TU ROL:</h3>
+            
             <div id="roleCardBox" class="role-card">
                 <div id="roleCover" style="cursor:pointer;" onclick="toggleRole()">
                     <div style="font-size: 3em;">🙈</div>
                     <p style="font-weight:bold; margin-top:10px;">TOQUE PARA REVELAR</p>
                 </div>
+                
                 <div id="roleContent" class="hidden">
                     <div id="secretWord" class="big-word">...</div>
                     <p id="roleDesc"></p>
                 </div>
             </div>
+
             <button onclick="toggleRole()" id="btnToggleRole" style="background:#34495e; font-size:0.9em; margin-top:15px; border:1px solid #555;">👁️ MOSTRAR ROL</button>
+            
             <p style="color:#a2a8d3; margin-top:20px;">Categoría: <span id="playerCategory"></span></p>
         </div>
 
-        <div id="pUI_frase" class="card hidden">
-            <h3>COMPLETA:</h3>
-            <p id="pFrasePrompt" style="font-style:italic">...</p>
-            <input type="text" id="fraseInput" placeholder="Tu respuesta graciosa...">
-            <button onclick="submitFrase()">ENVIAR 😂</button>
-        </div>
-
-        <div id="pUI_trivia" class="hidden" style="width:100%">
-            <h3>ELIGE RÁPIDO:</h3>
-            <div class="trivia-grid">
-                <button class="trivia-btn btn-0" onclick="submitTrivia(0)"></button>
-                <button class="trivia-btn btn-1" onclick="submitTrivia(1)"></button>
-                <button class="trivia-btn btn-2" onclick="submitTrivia(2)"></button>
-                <button class="trivia-btn btn-3" onclick="submitTrivia(3)"></button>
-            </div>
-        </div>
-
         <div id="playerVotingScreen" class="hidden">
-            <h2>Vota:</h2>
+            <h2>¿Quién es el Impostor?</h2>
             <div id="voteButtonsContainer"></div>
         </div>
         <div id="playerWaitScreen" class="hidden">
@@ -189,20 +159,25 @@
         let isHost = false;
         let myRoomCode = "";
         let currentTimer = null;
-        let savedName = "", savedRoom = "";
+        let savedName = "";
+        let savedRoom = "";
 
         socket.on('connect', () => {
-            if (savedName && savedRoom && !isHost) socket.emit('joinGame', { name: savedName, roomCode: savedRoom });
+            if (savedName && savedRoom && !isHost) {
+                console.log("Intentando reconectar...");
+                socket.emit('joinGame', { name: savedName, roomCode: savedRoom });
+            }
         });
 
         window.onload = function() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('room')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomParam = urlParams.get('room');
+            if (roomParam) {
                 document.getElementById('modeSelect').classList.add('hidden');
                 document.getElementById('playerView').classList.remove('hidden');
-                document.getElementById('roomInput').value = params.get('room');
+                document.getElementById('roomInput').value = roomParam;
                 document.getElementById('roomInput').disabled = true;
-                savedRoom = params.get('room');
+                savedRoom = roomParam; 
             }
         };
 
@@ -213,7 +188,6 @@
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('hostView').classList.remove('hidden');
         }
-        function selectGame(type) { socket.emit('selectGame', type); }
 
         socket.on('gameCreated', (code) => {
             myRoomCode = code;
@@ -233,97 +207,91 @@
             }).join('');
         });
 
+        // CORRECCIÓN: Apunta a 'selectGame' con parámetro 'impostor'
+        function startGame() { 
+            socket.emit('selectGame', 'impostor'); 
+        }
+
         // --- JUGADOR ---
         function initPlayerManual() {
             document.getElementById('modeSelect').classList.add('hidden');
             document.getElementById('playerView').classList.remove('hidden');
         }
+
         function joinGame() {
             const name = document.getElementById('username').value;
             const code = document.getElementById('roomInput').value.toUpperCase();
             if(name && code.length === 4) {
-                savedName = name; savedRoom = code; 
+                savedName = name; 
+                savedRoom = code; 
                 socket.emit('joinGame', { name: name, roomCode: code });
             } else { 
-                alert("Faltan datos");
+                const btn = document.querySelector('#loginScreen button');
+                btn.style.background = "#e74c3c"; btn.innerText = "¡FALTAN DATOS!";
+                setTimeout(() => { btn.style.background = "#e94560"; btn.innerText = "ENTRAR 🚀"; }, 1000);
             }
-        }
-        function submitFrase() {
-            const txt = document.getElementById('fraseInput').value;
-            if(txt) { socket.emit('submitFrase', txt); document.getElementById('pUI_frase').classList.add('hidden'); document.getElementById('playerWaitScreen').classList.remove('hidden'); }
-        }
-        function submitTrivia(idx) {
-             socket.emit('submitTrivia', idx);
-             document.getElementById('pUI_trivia').classList.add('hidden');
-             document.getElementById('playerWaitScreen').classList.remove('hidden');
         }
 
         socket.on('errorMsg', (msg) => { document.getElementById('errorMsg').innerText = msg; });
-        socket.on('forceWaitScreen', () => { hidePlayerScreens(); document.getElementById('waitingScreen').classList.remove('hidden'); });
+
+        socket.on('forceWaitScreen', () => {
+             document.getElementById('loginScreen').classList.add('hidden');
+             document.getElementById('waitingScreen').classList.remove('hidden');
+             document.getElementById('roleScreen').classList.add('hidden');
+             document.getElementById('playerVotingScreen').classList.add('hidden');
+        });
+
         socket.on('updatePlayerList', (players) => {
             if(!isHost && !document.getElementById('loginScreen').classList.contains('hidden')) {
-                hidePlayerScreens(); document.getElementById('waitingScreen').classList.remove('hidden');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('waitingScreen').classList.remove('hidden');
             }
         });
 
-        // --- GAME START UI HANDLER ---
-        socket.on('startGameUI', (data) => {
+        // --- JUEGO ---
+        socket.on('gameStartedMain', (data) => {
             if(isHost) {
-                document.getElementById('hostLobby').classList.add('hidden');
-                if(data.type === 'impostor') {
-                    document.getElementById('hostGameScreen').classList.remove('hidden');
-                    document.getElementById('hostCategory').innerText = data.category;
-                    document.getElementById('hostStarter').innerText = data.start;
-                    speak("La categoría es " + data.category + ". Empieza " + data.start);
-                    startTimer(300);
-                } else if (data.type === 'frase') {
-                    document.getElementById('gameUI_frase').classList.remove('hidden');
-                    document.getElementById('fraseText').innerText = data.prompt;
-                    speak(data.prompt);
-                } else if (data.type === 'trivia') {
-                    document.getElementById('gameUI_trivia').classList.remove('hidden');
-                    document.getElementById('qText').innerText = data.question.q;
-                    document.getElementById('opt0').innerText = data.question.ans[0];
-                    document.getElementById('opt1').innerText = data.question.ans[1];
-                    document.getElementById('opt2').innerText = data.question.ans[2];
-                    document.getElementById('opt3').innerText = data.question.ans[3];
-                    speak(data.question.q);
-                }
-            } else {
-                hidePlayerScreens();
-                if(data.type === 'impostor') { /* espera evento roleAssign */ }
-                else if(data.type === 'frase') {
-                    document.getElementById('pUI_frase').classList.remove('hidden');
-                    document.getElementById('pFrasePrompt').innerText = data.prompt;
-                    document.getElementById('fraseInput').value = "";
-                } else if (data.type === 'trivia') {
-                    document.getElementById('pUI_trivia').classList.remove('hidden');
-                }
+                document.getElementById('btnStart').classList.add('hidden');
+                document.getElementById('gameInstructions').classList.add('hidden');
+                document.getElementById('hostGameScreen').classList.remove('hidden');
+                document.getElementById('hostCategory').innerText = data.category;
+                document.getElementById('hostStarter').innerText = data.start;
+                speak("La categoría es " + data.category + ". Empieza " + data.start);
+                startTimer(300);
             }
         });
 
-        // --- SPECIFIC: IMPOSTOR ---
+        // --- LÓGICA DE MOSTRAR/OCULTAR ROL Y COLOR ---
         function toggleRole() {
             const cover = document.getElementById('roleCover');
             const content = document.getElementById('roleContent');
             const btn = document.getElementById('btnToggleRole');
             const card = document.getElementById('roleCardBox');
+            
             if (cover.classList.contains('hidden')) {
-                cover.classList.remove('hidden'); content.classList.add('hidden'); card.classList.remove('revealed'); btn.innerText = "👁️ MOSTRAR ROL";
+                cover.classList.remove('hidden');
+                content.classList.add('hidden');
+                card.classList.remove('revealed');
+                btn.innerText = "👁️ MOSTRAR ROL";
             } else {
-                cover.classList.add('hidden'); content.classList.remove('hidden'); card.classList.add('revealed'); btn.innerText = "🙈 OCULTAR ROL";
+                cover.classList.add('hidden');
+                content.classList.remove('hidden');
+                card.classList.add('revealed');
+                btn.innerText = "🙈 OCULTAR ROL";
             }
         }
 
         socket.on('roleAssign', (data) => {
-            hidePlayerScreens();
+            document.getElementById('waitingScreen').classList.add('hidden');
+            document.getElementById('playerWaitScreen').classList.add('hidden');
             document.getElementById('roleScreen').classList.remove('hidden');
             
             document.getElementById('roleCover').classList.remove('hidden');
             document.getElementById('roleContent').classList.add('hidden');
             document.getElementById('btnToggleRole').innerText = "👁️ MOSTRAR ROL";
+            
             const card = document.getElementById('roleCardBox');
-            card.classList.remove('revealed');
+            card.classList.remove('revealed'); 
 
             document.getElementById('playerCategory').innerText = data.category;
             
@@ -338,54 +306,37 @@
             }
         });
 
-        // --- TRIVIA RESULT ---
-        socket.on('triviaRoundEnd', (data) => {
-             if(isHost) speak("Respuesta correcta: " + ['Roja','Azul','Amarilla','Verde'][data.correct]);
-        });
-        socket.on('triviaGameOver', (scores) => {
-            if(isHost) {
-                const winner = scores.sort((a,b) => b.score - a.score)[0];
-                showFinalResult({expelled: winner.name + " (" + winner.score + " pts)", secret: "GANADOR TRIVIA", isTie: false});
-            }
-        });
-
-        // --- VOTING (Impostor & Frase) ---
+        // --- VOTACIÓN ---
         function triggerVoting() { socket.emit('startVoting'); }
 
-        socket.on('votingPhaseStarted', (list) => {
+        socket.on('votingPhaseStarted', (players) => {
             if(isHost) {
                 document.getElementById('hostGameScreen').classList.add('hidden');
                 document.getElementById('hostVotingScreen').classList.remove('hidden');
-                document.getElementById('totalPlayers').innerText = list.length;
+                const active = players.filter(p => p.connected).length;
+                document.getElementById('totalPlayers').innerText = active;
                 document.getElementById('votesIn').innerText = "0";
                 document.getElementById('progressBar').style.width = "0%";
                 speak("¡Tiempo! Es hora de votar.");
             } else {
-                hidePlayerScreens();
+                document.getElementById('roleScreen').classList.add('hidden');
                 document.getElementById('playerVotingScreen').classList.remove('hidden');
                 const box = document.getElementById('voteButtonsContainer');
                 box.innerHTML = "";
-                list.forEach(item => {
-                    // Si es frase, item es objeto respuesta {text, name}. Si es impostor, item es jugador.
-                    const label = item.text ? item.text : item.name; 
-                    const val = item.text ? item.text : item.name;
-                    
-                    let btn = document.createElement('button');
-                    btn.className = 'vote-btn';
-                    btn.innerText = label;
-                    btn.onclick = () => {
-                        socket.emit('castVote', val);
-                        document.getElementById('playerVotingScreen').classList.add('hidden');
-                        document.getElementById('playerWaitScreen').classList.remove('hidden');
-                    };
-                    box.appendChild(btn);
+                players.forEach(p => {
+                    if (p.connected) {
+                        let btn = document.createElement('button');
+                        btn.className = 'vote-btn';
+                        btn.innerText = p.name;
+                        btn.onclick = () => {
+                            socket.emit('castVote', p.name);
+                            document.getElementById('playerVotingScreen').classList.add('hidden');
+                            document.getElementById('playerWaitScreen').classList.remove('hidden');
+                        };
+                        box.appendChild(btn);
+                    }
                 });
             }
-        });
-        
-        socket.on('fraseVotingPhase', (answers) => {
-             // Reutilizamos la pantalla de votación, pero enviamos respuestas
-             socket.on('votingPhaseStarted')(answers);
         });
 
         socket.on('updateVoteCount', (data) => {
@@ -396,59 +347,101 @@
             }
         });
 
-        // --- RESULTADOS ---
-        socket.on('votingCompleted', (res) => { processResult(res); });
-        socket.on('fraseWinner', (res) => { processResult({expelled: res.text, secret: "GANADOR", isTie: false}); });
-
-        function processResult(res) {
+        socket.on('votingCompleted', (res) => {
             if(isHost) {
-                document.getElementById('hostVotingScreen').classList.add('hidden');
-                document.getElementById('gameUI_frase').classList.add('hidden');
                 if (res.isTie) {
+                    document.getElementById('hostVotingScreen').classList.add('hidden');
                     document.getElementById('hostRouletteScreen').classList.remove('hidden');
-                    speak("¡Empate! Ruleta.");
-                    spinWheel(res.tiedPlayers, res.expelled, () => { showFinalResult(res); });
+                    speak("¡Tenemos un empate! Que gire la ruleta.");
+                    spinWheel(res.tiedPlayers, res.expelled, () => {
+                        showFinalResult(res);
+                    });
                 } else {
+                    document.getElementById('hostVotingScreen').classList.add('hidden');
                     showFinalResult(res);
                 }
             } else {
                 document.getElementById('playerWaitScreen').classList.add('hidden');
-                // En impostor volvemos al rol, en otros a espera
-                document.getElementById('waitingScreen').classList.remove('hidden');
-                alert("Resultado: " + res.expelled);
+                document.getElementById('roleScreen').classList.remove('hidden');
+                
+                document.getElementById('roleCover').classList.remove('hidden');
+                document.getElementById('roleContent').classList.add('hidden');
+                document.getElementById('roleCardBox').classList.remove('revealed');
+                document.getElementById('btnToggleRole').innerText = "👁️ MOSTRAR ROL";
+                
+                if(res.isTie) setTimeout(() => alert("Por ruleta salió: " + res.expelled), 5000);
+                else alert("Expulsado: " + res.expelled);
             }
-        }
+        });
 
         function showFinalResult(res) {
             document.getElementById('hostRouletteScreen').classList.add('hidden');
             document.getElementById('hostResultScreen').classList.remove('hidden');
             document.getElementById('expelledName').innerText = res.expelled;
             document.getElementById('revealWord').innerText = res.secret;
-            speak("Resultado: " + res.expelled);
+            speak("El expulsado es " + res.expelled + ". La palabra era " + res.secret);
             fireConfetti();
         }
 
-        // --- RESET ---
+        function spinWheel(players, winner, callback) {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+            const count = players.length;
+            const degPerSeg = 360 / count;
+            const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
+            let gradient = "conic-gradient(";
+            players.forEach((p, i) => { gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `; });
+            gradient = gradient.slice(0, -2) + ")";
+            wheel.style.background = gradient;
+            
+            wheel.innerHTML = "";
+            players.forEach((p, i) => {
+                const label = document.createElement('div');
+                label.innerText = p;
+                label.style.position = 'absolute';
+                label.style.top = '50%';
+                label.style.left = '50%';
+                label.style.transformOrigin = '0 0';
+                const angle = i * degPerSeg + (degPerSeg / 2); 
+                label.style.transform = `rotate(${angle - 90}deg) translate(60px)`;
+                label.style.width = "120px";
+                label.style.textAlign = "center";
+                label.style.fontWeight = "bold";
+                label.style.textShadow = "0 0 3px black";
+                label.style.pointerEvents = "none";
+                wheel.appendChild(label);
+            });
+
+            const winnerIndex = players.indexOf(winner);
+            const winnerCenterAngle = winnerIndex * degPerSeg + (degPerSeg / 2);
+            const totalRotation = 1800 + (360 - winnerCenterAngle);
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+            }, 50);
+            setTimeout(callback, 4500);
+        }
+
         function resetGame() { socket.emit('resetGame'); }
 
         socket.on('resetClient', () => {
             if (currentTimer) clearInterval(currentTimer);
             if(isHost) {
-                // Ocultar todo juego
-                const ids = ['hostResultScreen','hostRouletteScreen','hostGameScreen','hostVotingScreen','gameUI_frase','gameUI_trivia'];
-                ids.forEach(id => document.getElementById(id).classList.add('hidden'));
-                document.getElementById('hostLobby').classList.remove('hidden');
+                document.getElementById('hostResultScreen').classList.add('hidden');
+                document.getElementById('hostRouletteScreen').classList.add('hidden');
+                document.getElementById('hostGameScreen').classList.add('hidden');
+                document.getElementById('hostVotingScreen').classList.add('hidden');
+                document.getElementById('btnStart').classList.remove('hidden');
+                document.getElementById('gameInstructions').classList.remove('hidden');
             } else {
-                hidePlayerScreens();
+                document.getElementById('roleScreen').classList.add('hidden');
+                document.getElementById('playerVotingScreen').classList.add('hidden');
+                document.getElementById('playerWaitScreen').classList.add('hidden');
                 document.getElementById('waitingScreen').classList.remove('hidden');
             }
         });
-
-        // --- UTILS ---
-        function hidePlayerScreens() {
-            const ids = ['loginScreen','waitingScreen','roleScreen','pUI_frase','pUI_trivia','playerVotingScreen','playerWaitScreen'];
-            ids.forEach(id => document.getElementById(id).classList.add('hidden'));
-        }
 
         function startTimer(duration) {
             if (currentTimer) clearInterval(currentTimer);
@@ -467,37 +460,22 @@
             }, 1000);
         }
 
-        function spinWheel(players, winner, callback) {
-            const wheel = document.getElementById('wheel');
-            wheel.innerHTML = '';
-            const count = players.length;
-            const degPerSeg = 360 / count;
-            const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
-            let gradient = "conic-gradient(";
-            players.forEach((p, i) => { gradient += `${colors[i % colors.length]} ${i * degPerSeg}deg ${(i + 1) * degPerSeg}deg, `; });
-            gradient = gradient.slice(0, -2) + ")";
-            wheel.style.background = gradient;
-            wheel.innerHTML = "";
-            players.forEach((p, i) => {
-                const label = document.createElement('div');
-                label.innerText = p;
-                label.style.position = 'absolute';
-                label.style.top = '50%'; label.style.left = '50%'; label.style.transformOrigin = '0 0';
-                const angle = i * degPerSeg + (degPerSeg / 2); 
-                label.style.transform = `rotate(${angle - 90}deg) translate(60px)`;
-                label.style.width = "120px"; label.style.textAlign = "center"; label.style.fontWeight = "bold"; label.style.textShadow = "0 0 3px black"; label.style.pointerEvents = "none";
-                wheel.appendChild(label);
-            });
-            const winnerIndex = players.indexOf(winner);
-            const winnerCenterAngle = winnerIndex * degPerSeg + (degPerSeg / 2);
-            const totalRotation = 1800 + (360 - winnerCenterAngle);
-            wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
-            setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)'; wheel.style.transform = `rotate(${totalRotation}deg)`; }, 50);
-            setTimeout(callback, 4500);
+        function speak(txt) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(txt);
+                u.lang = 'es-MX';
+                window.speechSynthesis.speak(u);
+            }
         }
-
-        function speak(txt) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'es-MX'; window.speechSynthesis.speak(u); } }
-        function fireConfetti() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+        function fireConfetti() {
+            var duration = 3000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
     </script>
 </body>
 </html>

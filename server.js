@@ -341,9 +341,10 @@ io.on("connection", (socket) => {
         socket.join(roomCode);
         socket.roomCode = roomCode;
         socket.emit("gameCreated", roomCode);
+        console.log("Sala creada:", roomCode);
     });
 
-    // UNIRSE (CON RECONEXIÓN)
+    // UNIRSE
     socket.on("joinGame", ({ name, roomCode }) => {
         if (!name || !roomCode) return;
         const cleanName = name.trim();
@@ -363,14 +364,9 @@ io.on("connection", (socket) => {
             socket.username = cleanName;
             
             if (room.started) {
-                // Recuperar estado según el juego
                 if (room.gameType === 'impostor') {
                     if (existing.role === "Impostor") socket.emit("roleAssign", { role: "Impostor", category: room.gameData.cat, start: "..." });
                     else socket.emit("roleAssign", { role: "Ciudadano", category: room.gameData.cat, word: room.gameData.secret, start: "..." });
-                } else if (room.gameType === 'frase') {
-                    socket.emit("startGameUI", { type: 'frase', prompt: room.gameData.prompt });
-                } else if (room.gameType === 'trivia') {
-                    socket.emit("startGameUI", { type: 'trivia', question: triviaQuestions[room.gameData.qIndex] });
                 }
             } else {
                 socket.emit("forceWaitScreen");
@@ -388,7 +384,9 @@ io.on("connection", (socket) => {
     });
 
     // --- SELECCIONAR JUEGO ---
+    // El cliente corregido emitirá 'selectGame' con 'impostor'
     socket.on("selectGame", (gameType) => {
+        console.log("Iniciando juego:", gameType);
         const code = socket.roomCode;
         const room = games[code];
         if (!room) return;
@@ -400,7 +398,12 @@ io.on("connection", (socket) => {
 
         // 1. IMPOSTOR
         if (gameType === 'impostor') {
-            if(active.length < 1) return;
+            if(active.length < 1) { // Necesitas al menos 2 jugadores para probar, idealmente 3
+                 // io.to(code).emit("errorMsg", "Se necesitan más jugadores"); 
+                 // return;
+            }
+            
+            // CORRECCIÓN PRINCIPAL: Usar impostorWords
             const selected = impostorWords[Math.floor(Math.random() * impostorWords.length)];
             room.gameData = { secret: selected.word, cat: selected.cat };
             
@@ -417,63 +420,8 @@ io.on("connection", (socket) => {
                     io.to(p.id).emit("roleAssign", { role: "Ciudadano", category: selected.cat, word: selected.word, start: starter });
                 }
             });
-            io.to(code).emit("startGameUI", { type: 'impostor', category: selected.cat, start: starter });
-        }
-
-        // 2. FRASE MALDITA
-        if (gameType === 'frase') {
-            const frase = frases[Math.floor(Math.random() * frases.length)];
-            room.gameData = { prompt: frase, answers: {} };
-            io.to(code).emit("startGameUI", { type: 'frase', prompt: frase });
-        }
-
-        // 3. GUERRA DE CEREBROS
-        if (gameType === 'trivia') {
-            room.gameData = { qIndex: 0, answers: {} };
-            sendTriviaQuestion(room, code);
-        }
-    });
-
-    // --- LÓGICA FRASE ---
-    socket.on("submitFrase", (text) => {
-        const code = socket.roomCode;
-        const room = games[code];
-        if(!room) return;
-        room.gameData.answers[socket.id] = { name: socket.username, text: text };
-        
-        const activeCount = room.players.filter(p => p.connected).length;
-        if (Object.keys(room.gameData.answers).length >= activeCount) {
-            io.to(code).emit("fraseVotingPhase", Object.values(room.gameData.answers));
-        }
-    });
-
-    // --- LÓGICA TRIVIA ---
-    function sendTriviaQuestion(room, code) {
-        const q = triviaQuestions[room.gameData.qIndex];
-        room.gameData.answers = {}; 
-        io.to(code).emit("startGameUI", { type: 'trivia', question: q, index: room.gameData.qIndex + 1 });
-    }
-
-    socket.on("submitTrivia", (ansIdx) => {
-        const code = socket.roomCode;
-        const room = games[code];
-        if(!room) return;
-        
-        const currentQ = triviaQuestions[room.gameData.qIndex];
-        const isCorrect = (ansIdx === currentQ.correct);
-        const player = room.players.find(p => p.id === socket.id);
-        if (isCorrect) player.score += 100;
-        
-        room.gameData.answers[socket.id] = true;
-        
-        const activeCount = room.players.filter(p => p.connected).length;
-        if (Object.keys(room.gameData.answers).length >= activeCount) {
-            io.to(code).emit("triviaRoundEnd", { correct: currentQ.correct, scores: room.players });
-            setTimeout(() => {
-                room.gameData.qIndex++;
-                if (room.gameData.qIndex < triviaQuestions.length) sendTriviaQuestion(room, code);
-                else io.to(code).emit("triviaGameOver", room.players);
-            }, 5000);
+            // Enviamos el evento para que la TV cambie de pantalla
+            io.to(code).emit("gameStartedMain", { category: selected.cat, start: starter });
         }
     });
 
@@ -486,12 +434,12 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("castVote", (voteData) => {
+    socket.on("castVote", (voteName) => {
         const code = socket.roomCode;
         const room = games[code];
         if(!room) return;
 
-        room.votes[socket.username] = voteData; // Usar nombre para evitar duplicados
+        room.votes[socket.username] = voteName; 
         
         const activeCount = room.players.filter(p => p.connected).length;
         const votesCount = Object.keys(room.votes).length;
@@ -512,13 +460,11 @@ io.on("connection", (socket) => {
 
             if (room.gameType === 'impostor') {
                 io.to(code).emit("votingCompleted", { expelled: winner, secret: room.gameData.secret, isTie: isTie, tiedPlayers: winners });
-            } else if (room.gameType === 'frase') {
-                io.to(code).emit("fraseWinner", { text: winner });
             }
         }
     });
 
-    // REINICIAR (VUELVE AL MENÚ)
+    // REINICIAR
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
@@ -526,7 +472,7 @@ io.on("connection", (socket) => {
             room.started = false;
             room.votes = {};
             room.gameType = '';
-            io.to(code).emit("resetClient"); // Esto ahora mandará al menú
+            io.to(code).emit("resetClient");
             io.to(code).emit("updatePlayerList", room.players);
         }
     });
@@ -544,4 +490,4 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => { console.log(`Server en ${PORT}`); });
+http.listen(PORT, () => { console.log(`Server corriendo en puerto ${PORT}`); });
