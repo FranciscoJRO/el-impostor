@@ -327,9 +327,8 @@ function makeId(length) {
     return result;
 }
 
-// Mezclar array (Fisher-Yates)
 function shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
+  let currentIndex = array.length, randomIndex;
   while (currentIndex != 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
@@ -366,13 +365,13 @@ io.on("connection", (socket) => {
         const existing = room.players.find(p => p.name.toLowerCase() === cleanName.toLowerCase());
         
         if (existing) {
-            // RECONEXIÓN
             existing.id = socket.id;
             existing.connected = true;
             socket.join(cleanCode);
             socket.roomCode = cleanCode;
             socket.username = cleanName;
             
+            // Si el juego ya empezó, reconectar al estado
             if (room.started) {
                 if (room.gameType === 'impostor') {
                     if (existing.role === "Impostor") socket.emit("roleAssign", { role: "Impostor", category: room.gameData.cat, start: "..." });
@@ -386,7 +385,6 @@ io.on("connection", (socket) => {
                 socket.emit("forceWaitScreen");
             }
         } else {
-            // NUEVO JUGADOR
             if (room.started) { socket.emit("errorMsg", "Partida iniciada."); return; }
             const player = { id: socket.id, name: cleanName, score: 0, connected: true };
             room.players.push(player);
@@ -403,22 +401,23 @@ io.on("connection", (socket) => {
         const room = games[code];
         if (!room) return;
         
-        // Si es trivia, no empezamos, mandamos a setup
+        // Si es Trivia, mostrar configuración primero
         if (gameType === 'trivia') {
             io.to(room.hostId).emit("setupTriviaUI");
             return;
         }
 
-        startSpecificGame(room, code, gameType);
+        // Si es otro, iniciar directo
+        initSpecificGame(room, code, gameType);
     });
 
-    // --- INICIAR TRIVIA CON CONFIGURACIÓN ---
+    // --- CONFIGURAR E INICIAR TRIVIA ---
     socket.on("startTriviaConfig", (count) => {
         const code = socket.roomCode;
         const room = games[code];
         if(!room) return;
         
-        // Mezclar preguntas y cortar
+        // Mezclar preguntas y tomar la cantidad deseada
         const shuffled = shuffle([...allTriviaQuestions]);
         const selectedQuestions = shuffled.slice(0, count);
         
@@ -431,21 +430,21 @@ io.on("connection", (socket) => {
             answers: {} 
         };
         
-        // Resetear puntajes
+        // Resetear puntajes de todos
         room.players.forEach(p => p.score = 0);
 
         sendTriviaQuestion(room, code);
     });
 
-    function startSpecificGame(room, code, gameType) {
+    function initSpecificGame(room, code, gameType) {
         room.gameType = gameType;
         room.started = true;
         room.votes = {};
         const active = room.players.filter(p => p.connected);
 
-        // 1. IMPOSTOR
+        // IMPOSTOR
         if (gameType === 'impostor') {
-            if(active.length < 1) return;
+            if(active.length < 1) return; // Mínimo 1 para pruebas
             const selected = impostorWords[Math.floor(Math.random() * impostorWords.length)];
             room.gameData = { secret: selected.word, cat: selected.cat };
             
@@ -453,6 +452,7 @@ io.on("connection", (socket) => {
             const starter = active[Math.floor(Math.random() * active.length)].name;
 
             active.forEach((p, i) => {
+                // Buscar jugador real en la lista completa
                 const original = room.players.find(pl => pl.name === p.name);
                 if (i === imposterIndex) {
                     original.role = "Impostor";
@@ -465,7 +465,7 @@ io.on("connection", (socket) => {
             io.to(code).emit("startGameUI", { type: 'impostor', category: selected.cat, start: starter });
         }
 
-        // 2. FRASE MALDITA
+        // FRASE MALDITA
         if (gameType === 'frase') {
             const frase = frases[Math.floor(Math.random() * frases.length)];
             room.gameData = { prompt: frase, answers: {} };
@@ -481,8 +481,11 @@ io.on("connection", (socket) => {
         room.gameData.answers[socket.id] = { name: socket.username, text: text };
         
         const activeCount = room.players.filter(p => p.connected).length;
+        // Enviar al Host cuántos van
+        io.to(room.hostId).emit("updateCount", { current: Object.keys(room.gameData.answers).length, total: activeCount });
+
         if (Object.keys(room.gameData.answers).length >= activeCount) {
-            // ENVIAR RESPUESTAS AL HOST PARA QUE LAS MUESTRE
+            // Enviar respuestas a la TV para votar
             io.to(code).emit("fraseVotingPhase", Object.values(room.gameData.answers));
         }
     });
@@ -503,15 +506,14 @@ io.on("connection", (socket) => {
         const isCorrect = (ansIdx === currentQ.correct);
         const player = room.players.find(p => p.id === socket.id);
         
-        if (isCorrect) player.score += 100; // 100 puntos por acierto
+        if (isCorrect) player.score += 100;
         
         room.gameData.answers[socket.id] = true;
         
         const activeCount = room.players.filter(p => p.connected).length;
         
-        // Si todos respondieron o si pasó tiempo (aquí simplificado a todos responden)
         if (Object.keys(room.gameData.answers).length >= activeCount) {
-            // Mostrar Leaderboard
+            // Mostrar Leaderboard en TV
             io.to(code).emit("triviaRoundEnd", { 
                 correct: currentQ.correct, 
                 scores: room.players.sort((a,b) => b.score - a.score) 
@@ -524,7 +526,7 @@ io.on("connection", (socket) => {
                 } else {
                     io.to(code).emit("triviaGameOver", room.players);
                 }
-            }, 6000); // 6 segundos para ver puntajes
+            }, 6000); // 6 seg para ver puntos
         }
     });
 
@@ -569,7 +571,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // REINICIAR
+    // REINICIAR (VUELVE AL MENÚ)
     socket.on("resetGame", () => {
         const code = socket.roomCode;
         const room = games[code];
